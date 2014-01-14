@@ -78,6 +78,9 @@ class Process():
             pass
 
 class copiedFile():
+    """Stores a list of previously, to the VM copied Files
+    Depends on toXML
+    """
     def __init__(self, source, destination, timeoffset=0, timeRate=100, upTime=0):
         self.source = self.setSource(source)
         self.destination = self.setDestination(destination)
@@ -210,20 +213,22 @@ class Machine():
         self.session.machine.saveSettings()
         self.unlock()
 
-    def videoCapture(self):
+    def videoCapture(self, path="/tmp/video"):
         self.lock()
-        self.session.machine.videoCaptureFile = '/tmp/video'
+        self.session.machine.videoCaptureFile = path
         self.session.machine.videoCaptureEnabled = True
         self.session.machine.saveSettings()
         self.unlock()
 
     def syntheticCPU(self):
+        """Intended to allow live migration from one VM-host to another one"""
         self.lock()
         self.session.machine.setCPUProperty(self.ctx['global'].constants.CPUPropertyType_Synthetic, True)
         self.session.machine.saveSettings()
         self.unlock()
 
     def virtualTimeRate(self, percent):
+        """sets the percentage, with which the time in the VM runs, relative to the host clock (realtime)"""
         self.debugger.virtualTimeRate = percent
 
     def unlock(self):
@@ -340,6 +345,9 @@ class Machine():
 
 
 class VboxControl():
+    """Main Class for the VboxControl
+    Depends on vboxapi and Machine
+    """
     def __init__(self):
         self.api_version = 2
         virtualBoxManager = VirtualBoxManager(None, None)
@@ -360,16 +368,16 @@ class VboxControl():
 
 
 v = VboxControl()
-v.machines['original'] = Machine(v.getMachine('Forensig20_XubuntuDesktopBase'))
+v.machines['original'] = Machine(v.getMachine('xubuntu-lts-base'))
 v.machines['clone2'] = Machine(v.machines['original'].clone('clone2'))
 #v.machines['clone2'] = Machine(v.getMachine('clone'))
-time.sleep(1)
-v.machines['clone2'].timeOffset(-100000)
-v.machines['clone2'].traceNetwork()
-v.machines['clone2'].videoCapture()
-v.machines['clone2'].syntheticCPU()
-v.machines['clone2'].start()
-time.sleep(40)
+# time.sleep(1)
+# v.machines['clone2'].timeOffset(-100000)
+# v.machines['clone2'].traceNetwork()
+# v.machines['clone2'].videoCapture()
+# v.machines['clone2'].syntheticCPU()
+# v.machines['clone2'].start()
+# time.sleep(40)
 
 #for i in range(10):
 #    time.sleep(4)
@@ -391,26 +399,26 @@ time.sleep(40)
 
 #p.terminate()
 
-p = v.machines['clone2'].launchProcess('/bin/cat', ['/proc/cpuinfo'])
-time.sleep(4)
-print p.read()
-v.machines['clone2'].virtualTimeRate(5000)
-p = v.machines['clone2'].launchProcess('/bin/date', [])
-time.sleep(4)
-print p.read()
-v.machines['clone2'].virtualTimeRate(30)
-p = v.machines['clone2'].launchProcess('/bin/date', [])
-time.sleep(4)
-print p.read()
+# p = v.machines['clone2'].launchProcess('/bin/cat', ['/proc/cpuinfo'])
+# time.sleep(4)
+# print p.read()
+# v.machines['clone2'].virtualTimeRate(5000)
+# p = v.machines['clone2'].launchProcess('/bin/date', [])
+# time.sleep(4)
+# print p.read()
+# v.machines['clone2'].virtualTimeRate(30)
+# p = v.machines['clone2'].launchProcess('/bin/date', [])
+# time.sleep(4)
+# print p.read()
 
-p = v.machines['clone2'].launchProcess('/bin/bash', [])
-time.sleep(4)
-p.write('ifconfig\n')
-time.sleep(2)
-print p.read()
+# p = v.machines['clone2'].launchProcess('/bin/bash', [])
+# time.sleep(4)
+# p.write('ifconfig\n')
+# time.sleep(2)
+# print p.read()
 
-v.machines['clone2'].stop()
-v.machines['clone2'].delete()
+# v.machines['clone2'].stop()
+# v.machines['clone2'].delete()
 
 
 #time.sleep(35)
