@@ -3,7 +3,7 @@ import os
 import subprocess
 
 
-class vbox():
+class Vbox():
 """baseclass for controlling virtualbox
 
 This implements all operating system independent methods 
@@ -61,7 +61,7 @@ This implements all operating system independent methods
 
 	def stop(self):
 
-		self.checkRunning()
+		self.check_running()
 		self.lock()
 		self.session.console.power_down()
 		self.unlock()
@@ -81,13 +81,13 @@ This implements all operating system independent methods
 		"""
 		self.session.unlock_machine()
 
-	def takeScreenshot(self,path="/tmp/screenshot.png"):
+	def take_screenshot(self,path="/tmp/screenshot.png"):
 		"""Save screenshot to given path
 
 		This obviously requires a running VM
 		"""
 
-		self.checkRunning()
+		self.check_running()
 		h, w, d, x, y = self.session.console.display.get_screen_resolution(0)
 
 		png = self.session.console.display.take_screen_shot_png_to_array(0, h, w)
@@ -96,22 +96,22 @@ This implements all operating system independent methods
 		f.write(png)
 
 
-	def startVideo(self, path="/tmp/video"):
+	def start_video(self, path="/tmp/video"):
 
-		self.checkRunning()
+		self.check_running()
 		self.session.machine.video_capture_file = "/tmp/video"
 		self.session.machine.video_capture_enabled = True
 		self.session.machine.save_settings()
 
 
-	def stopVideo(self):
+	def stop_video(self):
 
-		self.checkRunning()
+		self.check_running()
 		self.session.machine.video_capture_enabled = False
 		self.session.machine.save_settings()
 
 
-	def timeOffset(self,offset=0):
+	def time_offset(self,offset=0):
 		"""Sets a time offset in seconds
 
 		The offset is set in the bios clock of the virtual machine, multiplied 
@@ -119,24 +119,24 @@ This implements all operating system independent methods
 		Default resets. 
 		"""
 
-		self.checkRunning()
+		self.check_running()
 		self.session.machine.bios_settings.time_offset = offset * 1000
 
 
-	def timeSpeedup(self,speedup=100):
+	def time_speedup(self,speedup=100):
 		"""Sets relative speed time runs in the vm
 
 		The speedup is set in percent, valid values go from 2 to 20000 percent.
 		Default resets. 
 		"""
 
-		self.checkRunning()
+		self.check_running()
 		self.session.console.debugger.virtual_time_rate = speedup
 
 
-	def startNetworkTrace(self, path="/tmp/trace.pcap"):
+	def start_network_trace(self, path="/tmp/trace.pcap"):
 
-		self.checkRunning()
+		self.check_running()
 		self.network = session.machine.get_network_adapter(0)
 
 		self.network.trace_file = path
@@ -144,22 +144,22 @@ This implements all operating system independent methods
         self.session.machine.saveSettings()
 
 
-	def stopNetworkTrace(self):
+	def stop_network_trace(self):
 
-		self.checkRunning()
+		self.check_running()
 		self.network = session.machine.get_network_adapter(0)
 
 		self.network.traceEnabled = False
         self.session.machine.saveSettings()
 
 
-    def createGuestSession(username="default", password="12345"):
+    def create_guest_session(username="default", password="12345"):
 
-    	self.checkRunning()
+    	self.check_running()
     	self.guestsession = self.session.console.guest.create_session(username,password)
 
 
-    def mountFolderAsCD(folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
+    def mount_folder_as_cd(folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
     	"""Creates a iso-image based on directory and mounts it to the VM
 
     	If the operating system inside the vm does no automounting, further action
@@ -168,7 +168,7 @@ This implements all operating system independent methods
     	Depends on mkisofs form genisoimage, should be installed by default on ubuntu
     	"""
 
-    	self.checkRunning()
+    	self.check_running()
 
     	#basic sanity check
     	if os.path.exists(iso_path) == False:
@@ -182,15 +182,17 @@ This implements all operating system independent methods
     	self.iso = iso_path
 
 
-    def umountCD():
+    def umount_cd():
 
-    	self.checkRunning()
+    	self.check_running()
     	self.session.machine.mount_medium("IDE",0,0,"",False)
 
     	#TODO: maybe remove self.iso afterwards
 
 
-    def checkRunning(errrormsg="Machine needs to be running"):
+    def run_process():
+
+    def check_running(errrormsg="Machine needs to be running"):
     	if not self.running:
     		print errrormsg
     		return

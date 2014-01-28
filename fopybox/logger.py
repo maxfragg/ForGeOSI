@@ -24,48 +24,52 @@ def toXML(classElement, **kwargs):
             node.append(xml)
     return node
 
-class logCopiedFile():
+class LogCopiedFile():
     """Stores data of a single file, copyed to the VM
 
     """
     def __init__(self, source, destination, timeoffset=0, timeRate=100, upTime=0):
         self.source = source
         self.destination = destination
-        self.tmp = self.copyToTemp()
-        self.md5Sum = self.calcMd5Sum()
-        self.sha256sum = self.calcSha256Sum()
-        self.filesize = self.getFileSize()
+        self.tmp = self.copy_to_temp()
+        self.md5Sum = self.calc_md5sum()
+        self.sha256sum = self.calc_sha256sum()
+        self.filesize = self.get_file_size()
         self.realtime = time.time()
         self.time = time.time() + timeoffset
         self.timeRate = timeRate
         self.upTime = upTime
 
-    def getFileSize(self):
+    def get_file_size(self):
         filesize = os.path.getsize(self.tmp)
         return filesize
 
-    def copyToTemp(self):
+    def copy_to_temp(self):
         tmp = '/tmp/%s.forensig20' % str(uuid.uuid4())
         shutil.copy(self.source, tmp)
         return tmp
 
-    def calcMd5Sum(self):
+    def calc_md5sum(self):
         md5 = hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
         return md5
 
-    def calcSha256Sum(self):
+    def calc_sha256sum(self):
         sha256 = hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
         return sha256
 
-    def getEntry(self):
-        return {'source': self.source, 'destination': self.destination, 'tmp': self.tmp, 'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 'filesize': self.filesize, 'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+    def get_entry(self):
+        return {'source': self.source,
+        	'destination': self.destination, 'tmp': self.tmp, 
+        	'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 
+        	'filesize': self.filesize, 'realtime': self.realtime, 
+        	'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
-    def toXML(self):
+    def to_xml(self):
         return toXML(self, nodeName="copiedFile", ignore=['time'])
 
 
 
-class logProcess():
+class LogProcess():
 	"""Stores data of a single process, running in the VM
 
 	"""
@@ -77,13 +81,15 @@ class logProcess():
 		self.timeRate = timeRate
 		self.upTime = upTime
 
-	def getEntry(self):
-		return {'process': self.process, 'arguments': self.arguments, 'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+	def get_entry(self):
+		return {'process': self.process, 'arguments': self.arguments, 
+			'realtime': self.realtime, 'time': self.time, 
+			'timeRate': self.timeRate, 'upTime': self.upTime}
 
-	def toXML(self):
+	def to_xml(self):
 		return toXML(self, nodeName="process",ignore=['time'])
 
-class logger():
+class Logger():
 	"""A simple logger for fopybox
 
 	This logger creates a protocol of actions performed with pyvbox, that altered
@@ -94,13 +100,13 @@ class logger():
 	def __init__(self):
 		self.log = []
 
-	def appendProcess(self, *args):
-		self.log.append(logProcess(*args))
+	def append_process(self, *args):
+		self.log.append(LogProcess(*args))
 
-	def appendFile(self, *args):
-		self.log.append(logCopiedFile(*args))
+	def append_file(self, *args):
+		self.log.append(LogCopiedFile(*args))
 
-	def getLog(self)
+	def get_log(self):
 	 	for l in self.log:
             print etree.tostring(l.getXML(), pretty_print=True)
 
