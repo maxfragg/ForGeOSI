@@ -9,7 +9,9 @@ class Vbox():
 This implements all operating system independent methods 
 """
 
-	def __init__(self,basename="ubuntu-lts-base",clonename="testvm",mode="clone",linkedName="Forensig20Linked",osType="Linux26",wait=True):
+	def __init__(self, basename="ubuntu-lts-base",
+			clonename="testvm", mode="clone", linkedName="Forensig20Linked",
+			osType="Linux26", wait=True):
 		"""Initialises a virtualbox instance
 
 		The new instance of this class can either reuse an existing virtual machine or create a new one,
@@ -20,17 +22,20 @@ This implements all operating system independent methods
 			self.vm = self.vb.create_machine("",clonename,[], osType,"")
 
 			_orig = self.vb.find_machine(basename)
-			_orig_session = orig.create_session()
+			_orig_session = _orig.create_session()
 
 			try:
                 _snap = _orig.findSnapshot(linkedName)
             except:
             	_orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
 
-                _snap = _orig_session.console.take_snapshot(linkedName, "")
+				_orig_session.console.take_snapshot(linkedName, "")
+                _snap = _orig.findSnapshot(linkedName)
             	_orig_session.unlock_machine()    
 
-		 	self.progress =  _snap.machine.clone_to(self.vm,virtualbox.library.CloneMode.machine_state, [virtualbox.library.CloneOptions.link])
+		 	self.progress =  _snap.machine.clone_to(
+		 			self.vm,virtualbox.library.CloneMode.machine_state,
+		 			[virtualbox.library.CloneOptions.link])
 		 	
 		 	if wait:
 		 		self.progress.wait_for_completion()
@@ -50,7 +55,15 @@ This implements all operating system independent methods
 
 		self.running = False
 
+
 	def start(self,type="headless",wait=True):
+		"""start a machine
+
+		The type "headless" means, the machine runs without any gui, the only 
+		sensible way on a remote server. This parameter is changable for 
+		debugging only
+		"""
+
 		self.progress = self.vm.launch_vm_process(self.session, type, '')
 
 		if wait:
@@ -60,19 +73,22 @@ This implements all operating system independent methods
 
 
 	def stop(self):
+		"""Stop a running machine
 
+		"""
 		self.check_running()
-		self.lock()
+		#self.lock()
 		self.session.console.power_down()
 		self.unlock()
 
 
 	def lock(self):
-		"""Locks the Machine to enable certain operations
+		"""Locks the machine to enable certain operations
 
 		This method should not be needed to be called form outside
 		"""
 		self.vm.lock_machine(self.session,virtualbox.library.LockType.shared)
+
 
 	def unlock(self):
 		"""Unlocks the machine
@@ -80,6 +96,7 @@ This implements all operating system independent methods
 		This method should not be needed to be called form outside
 		"""
 		self.session.unlock_machine()
+
 
 	def take_screenshot(self,path="/tmp/screenshot.png"):
 		"""Save screenshot to given path
@@ -190,7 +207,15 @@ This implements all operating system independent methods
     	#TODO: maybe remove self.iso afterwards
 
 
-    def run_process():
+    def run_process(command, arguments=[], stdin=''):
+    	"""Runs a process with arguments and stdin in the VM
+
+    	This method requires the Virtualbox Guest Additions to be installed
+    	"""
+    	self.check_running()
+    	process, stdout, stderr = gs.execute(command, arguments, stdin)
+
+
 
     def check_running(errrormsg="Machine needs to be running"):
     	if not self.running:
