@@ -14,8 +14,10 @@ This implements all operating system independent methods
 			osType="Linux26", wait=True):
 		"""Initialises a virtualbox instance
 
-		The new instance of this class can either reuse an existing virtual machine or create a new one,
-		based on a existing template. The concepts of sessions and machines are not exposed to the user"""
+		The new instance of this class can either reuse an existing virtual 
+		machine or create a new one, based on a existing template. The concepts
+		of sessions and machines are not exposed to the user"""
+		1
 		self.vb = virtualbox.Virtualbox()
 
 		if mode=="clone":
@@ -50,13 +52,14 @@ This implements all operating system independent methods
 		#use vm property to find systemtype
 		if osType in ["Linux26","Linux26_64","Ubuntu","Ubuntu_64"]:
 			self.os = osLinux(self)
-		elif osType in  ["Windows7","Windows7_64","Windows8","Windows8_64","Windows81","Windows81_64"]:
+		elif osType in  ["Windows7","Windows7_64","Windows8","Windows8_64"
+				,"Windows81","Windows81_64"]:
 			self.os = osWindows(self)
 
 		self.running = False
 
 
-	def start(self,type="headless",wait=True):
+	def start(self, type="headless", wait=True):
 		"""start a machine
 
 		The type "headless" means, the machine runs without any gui, the only 
@@ -66,20 +69,29 @@ This implements all operating system independent methods
 
 		self.progress = self.vm.launch_vm_process(self.session, type, '')
 
+		self.running = True
+
 		if wait:
 			self.progress.wait_for_completion()
 		else:
-			return
+			return self.progress
 
 
-	def stop(self):
+	def stop(self, wait=True):
 		"""Stop a running machine
 
 		"""
 		self.check_running()
 		#self.lock()
-		self.session.console.power_down()
-		self.unlock()
+		self.progress = self.session.console.power_down()
+
+		self.running = False
+
+		if wait:
+			self.progress.wait_for_completion()
+			self.unlock()
+		else:
+			return self.progress
 
 
 	def lock(self):
@@ -87,7 +99,12 @@ This implements all operating system independent methods
 
 		This method should not be needed to be called form outside
 		"""
-		self.vm.lock_machine(self.session,virtualbox.library.LockType.shared)
+		try:
+			self.vm.lock_machine(self.session,virtualbox.library.LockType.shared)
+		except:
+			pass
+
+		
 
 
 	def unlock(self):
@@ -95,10 +112,28 @@ This implements all operating system independent methods
 
 		This method should not be needed to be called form outside
 		"""
-		self.session.unlock_machine()
+		try:
+			self.session.unlock_machine()
+		except:
+			pass
 
 
-	def take_screenshot(self,path="/tmp/screenshot.png"):
+	def export(self, path="/tmp/myvm.ovf"):
+		"""Export a Virtualbox image
+
+		"""
+		#TODO, WIP not working!
+		self.check_stopped()
+		self.lock()
+
+		appliance = self.vb.create_appliance()
+
+		self.session.machine.export_to(appliance, path)
+
+		progress = appliance.write('ovf-2.0',[],path)
+
+
+	def take_screenshot(self, path="/tmp/screenshot.png"):
 		"""Save screenshot to given path
 
 		This obviously requires a running VM
@@ -170,13 +205,13 @@ This implements all operating system independent methods
         self.session.machine.saveSettings()
 
 
-    def create_guest_session(username="default", password="12345"):
+    def create_guest_session(self, username="default", password="12345"):
 
     	self.check_running()
     	self.guestsession = self.session.console.guest.create_session(username,password)
 
 
-    def mount_folder_as_cd(folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
+    def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
     	"""Creates a iso-image based on directory and mounts it to the VM
 
     	If the operating system inside the vm does no automounting, further action
@@ -199,7 +234,7 @@ This implements all operating system independent methods
     	self.iso = iso_path
 
 
-    def umount_cd():
+    def umount_cd(self):
 
     	self.check_running()
     	self.session.machine.mount_medium("IDE",0,0,"",False)
@@ -207,18 +242,36 @@ This implements all operating system independent methods
     	#TODO: maybe remove self.iso afterwards
 
 
-    def run_process(command, arguments=[], stdin=''):
+    def run_process(self, command, arguments=[], stdin=''):
     	"""Runs a process with arguments and stdin in the VM
 
     	This method requires the Virtualbox Guest Additions to be installed
     	"""
     	self.check_running()
-    	process, stdout, stderr = gs.execute(command, arguments, stdin)
+    	process, stdout, stderr = self.guestsession.execute(command, arguments, stdin)
 
 
+    def copy_to_vm(self, source, dest, wait=True):
+    	"""Copy a file form outside into the VM
 
-    def check_running(errrormsg="Machine needs to be running"):
+    	This leaves no plausible trace for fakeing, so use with care
+    	"""
+
+    	self.progress = self.guestSession.copy_to(source, destination, [])
+
+    	if wait:
+    		self.progress.wait_for_completion()
+    	else:
+    		return progress
+
+
+    def check_running(self, errrormsg="Machine needs to be running"):
     	if not self.running:
+    		print errrormsg
+    		return
+
+    def check_stopped(self, errrormsg="Machine needs to be stopped"):
+    	if self.running:
     		print errrormsg
     		return
 
@@ -232,6 +285,8 @@ features, that depend on the opertation system, running in the VM
 	def __init__(self,vb):
 		self.vb = vb
 
+	def create_user(username,password,):
+		pass
 
 class osWindows():
 """Windows specific operations 
@@ -242,4 +297,9 @@ features, that depend on the opertation system, running in the VM
 	def __init__(self,vb):
 		self.vb = vb
 
+	def create_user(self, username, password):
+		pass
+
+	def open_browser(self, website="www.google.com"):
+		vb.run_process()
 
