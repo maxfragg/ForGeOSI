@@ -59,10 +59,10 @@ class LogCopiedFile():
 
     def get_entry(self):
         return {'source': self.source,
-        	'destination': self.destination, 'tmp': self.tmp, 
-        	'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 
-        	'filesize': self.filesize, 'realtime': self.realtime, 
-        	'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+            'destination': self.destination, 'tmp': self.tmp, 
+            'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 
+            'filesize': self.filesize, 'realtime': self.realtime, 
+            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
     def to_xml(self):
         return toXML(self, nodeName="copiedFile", ignore=['time'])
@@ -70,44 +70,44 @@ class LogCopiedFile():
 
 
 class LogProcess():
-	"""Stores data of a single process, running in the VM
+    """Stores data of a single process, running in the VM
 
-	"""
-	def __init__(self, process, arguments, timeoffset=0, timeRate=0, upTime=0):
-		self.process = process
-		self.arguments = arguments
-		self.realtime = time.time()
-		self.time = time.time() + timeoffset
-		self.timeRate = timeRate
-		self.upTime = upTime
+    """
+    def __init__(self, process, arguments, timeoffset=0, timeRate=0, upTime=0):
+        self.process = process
+        self.arguments = arguments
+        self.realtime = time.time()
+        self.time = time.time() + timeoffset
+        self.timeRate = timeRate
+        self.upTime = upTime
 
-	def get_entry(self):
-		return {'process': self.process, 'arguments': self.arguments, 
-			'realtime': self.realtime, 'time': self.time, 
-			'timeRate': self.timeRate, 'upTime': self.upTime}
+    def get_entry(self):
+        return {'process': self.process, 'arguments': self.arguments, 
+            'realtime': self.realtime, 'time': self.time, 
+            'timeRate': self.timeRate, 'upTime': self.upTime}
 
-	def to_xml(self):
-		return toXML(self, nodeName="process",ignore=['time'])
+    def to_xml(self):
+        return toXML(self, nodeName="process",ignore=['time'])
 
 class Logger():
-	"""A simple logger for fopybox
+    """A simple logger for fopybox
 
-	This logger creates a protocol of actions performed with pyvbox, that altered
-	the virtual machine image. If wished, a xml-export is available.
+    This logger creates a protocol of actions performed with pyvbox, that altered
+    the virtual machine image. If wished, a xml-export is available.
 
-	"""
+    """
 
-	def __init__(self):
-		self.log = []
+    def __init__(self):
+        self.log = []
 
-	def append_process(self, *args):
-		self.log.append(LogProcess(*args))
+    def append_process(self, *args):
+        self.log.append(LogProcess(*args))
 
-	def append_file(self, *args):
-		self.log.append(LogCopiedFile(*args))
+    def append_file(self, *args):
+        self.log.append(LogCopiedFile(*args))
 
-	def get_log(self):
-	 	for l in self.log:
+    def get_log(self):
+        for l in self.log:
             print etree.tostring(l.getXML(), pretty_print=True)
 
-		
+        
