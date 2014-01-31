@@ -3,13 +3,29 @@ import os
 import subprocess
 from functools import wraps
 
+class VboxInfo():
+    """Helper class, not changing machine state
+
+    Those functions are meant to get information about the whole virtualbox state
+    and not limited to a single machine like the Vbox class 
+    """
+    def __init__(self):
+        self.vb = virtualbox.Virtualbox()
+
+    def list_vms(self):
+        return "\n".join([vm.name for vm in self.vb.machines])
+
+    def list_ostypes(self):
+        return "\n".join([os.id_p for os in vb.guest_os_types])
+
 
 class Vbox():
     """baseclass for controlling virtualbox
 
     This implements all operating system independent methods.
     Any method accepting an optional argument "wait" may return a progress object, 
-    to enable the user to wait, if "wait=False" is passed to it.
+    to enable the user to wait, if "wait=False" is passed to it. If this happens,
+    the machine might also stay in locked state!
     """
     
     def __init__(self, basename="ubuntu-lts-base",
@@ -19,8 +35,11 @@ class Vbox():
 
         The new instance of this class can either reuse an existing virtual 
         machine or create a new one, based on a existing template. The concepts
-        of sessions and machines are not exposed to the user"""
-        1
+        of sessions and machines are not exposed to the user
+
+        @osType - must be in >VboxInfo.list_ostypes()
+        """
+
         self.vb = virtualbox.Virtualbox()
 
         if mode=="clone":
@@ -138,6 +157,7 @@ class Vbox():
 
         if wait:
             progress.wait_for_completion()
+            self.unlock()
         else:
             return progress
 
