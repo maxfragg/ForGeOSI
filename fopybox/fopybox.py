@@ -21,6 +21,24 @@ class VboxInfo():
         return "\n".join([os.id_p for os in vb.guest_os_types])
 
 
+
+def check_running(func, errrormsg="Machine needs to be running"):
+    def checked(self):
+        if not self.running:
+            print errrormsg
+            return
+        func(self)
+    return checked
+
+def check_stopped(func, errrormsg="Machine needs to be stopped"):
+    def checked(self):
+        if self.running:
+            print errrormsg
+            return
+        func(self)
+    return checked
+
+
 class Vbox():
     """baseclass for controlling virtualbox
 
@@ -87,7 +105,7 @@ class Vbox():
         self.log = logger.Logger()
 
 
-    @self.check_stopped()   
+    @check_stopped  
     def start(self, type="headless", wait=True):
         """start a machine
 
@@ -105,7 +123,7 @@ class Vbox():
         else:
             return self.progress
 
-    @self.check_running()
+    @check_running
     def stop(self, wait=True):
         """Stop a running machine
 
@@ -146,7 +164,7 @@ class Vbox():
         except:
             pass
 
-    @self.check_stopped()
+    @check_stopped
     def export(self, path="/tmp/disk.vdi", wait=True):
         """Export a Virtualbox hard disk image
 
@@ -169,7 +187,7 @@ class Vbox():
 
 
 
-    @self.check_running()
+    @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
         """Save screenshot to given path
 
@@ -183,20 +201,20 @@ class Vbox():
         f = open(path, 'wb')
         f.write(png)
 
-    @self.check_running()
+    @check_running
     def start_video(self, path="/tmp/video"):
 
         self.session.machine.video_capture_file = "/tmp/video"
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
 
-    @self.check_running()
+    @check_running
     def stop_video(self):
 
         self.session.machine.video_capture_enabled = False
         self.session.machine.save_settings()
 
-    @self.check_running()
+    @check_running
     def time_offset(self,offset=0):
         """Sets a time offset in seconds
 
@@ -209,7 +227,7 @@ class Vbox():
 
         self.session.machine.bios_settings.time_offset = offset * 1000
 
-    @self.check_running()
+    @check_running
     def time_speedup(self,speedup=100):
         """Sets relative speed time runs in the vm
 
@@ -223,7 +241,7 @@ class Vbox():
         self.session.console.debugger.virtual_time_rate = speedup
 
 
-    @self.check_running()
+    @check_running
     def start_network_trace(self, path="/tmp/trace.pcap"):
 
 
@@ -234,7 +252,7 @@ class Vbox():
         self.session.machine.saveSettings()
 
 
-    @self.check_running()
+    @check_running
     def stop_network_trace(self):
 
         self.network = session.machine.get_network_adapter(0)
@@ -243,7 +261,7 @@ class Vbox():
         self.session.machine.saveSettings()
 
 
-    @self.check_running()
+    @check_running
     def create_guest_session(self, username="default", password="12345"):
         """creates a guest session for issuing commands to the guest system
 
@@ -254,7 +272,7 @@ class Vbox():
         self.guestsession = self.session.console.guest.create_session(username,password)
 
 
-    @self.check_running()
+    @check_running
     def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
         """Creates a iso-image based on directory and mounts it to the VM
 
@@ -275,7 +293,7 @@ class Vbox():
         self.session.machine.mount_medium("IDE",0,0,iso_path,False)
         self.iso = iso_path
 
-    @self.check_running()
+    @check_running
     def umount_cd(self):
 
         self.session.machine.mount_medium("IDE",0,0,"",False)
@@ -283,7 +301,7 @@ class Vbox():
         #TODO: maybe remove self.iso afterwards
 
 
-    @self.check_running()
+    @check_running
     def run_process(self, command, arguments=[], stdin=''):
         """Runs a process with arguments and stdin in the VM
 
@@ -294,7 +312,7 @@ class Vbox():
 
         self.log.add_process(process, arguments, stdin, stdout, stderr)
 
-    @self.check_running()
+    @check_running
     def copy_to_vm(self, source, dest, wait=True):
         """Copy a file form outside into the VM
 
@@ -319,37 +337,7 @@ class Vbox():
     #       print errrormsg
     #   return not self.running
 
-    def check_running(self, errrormsg="Machine needs to be running"):
 
-        def decorator(f):
-
-            @wraps(f)
-            def wrapped(*args, **kwargs):
-                if not self.running:
-                    print errrormsg
-                    return
-                else:
-                    return f(*args, **kwargs)
-
-            return wrapped
-
-        return decorator
-
-    def check_stopped(self, errrormsg="Machine needs to be stopped"):
-
-        def decorator(f):
-
-            @wraps(f)
-            def wrapped(*args, **kwargs):
-                if self.running:
-                    print errrormsg
-                    return
-                else:
-                    return f(*args, **kwargs)
-
-            return wrapped
-
-        return decorator
 
 
 
@@ -401,7 +389,7 @@ class osWindows():
         """remove the guest additions
 
         Warning: This can not be undone, since remote running of software is 
-        very limited without guest additions!
+        very limited without guest additions! You need to know the 
         """
 
         self.uninstall_programm("Oracle VM VirtualBox Guest Additions"+version)
