@@ -73,16 +73,21 @@ class LogProcess():
     """Stores data of a single process, running in the VM
 
     """
-    def __init__(self, process, arguments, timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, process, arguments, stdin='', stdout='', stderr='', 
+            timeoffset=0, timeRate=0, upTime=0):
         self.process = process
         self.arguments = arguments
+        self.stdin = stdin
+        self.stdout = stdout
+        self.stderr = stderr
         self.realtime = time.time()
         self.time = time.time() + timeoffset
         self.timeRate = timeRate
         self.upTime = upTime
 
     def get_entry(self):
-        return {'process': self.process, 'arguments': self.arguments, 
+        return {'process': self.process, 'arguments': self.arguments,
+            'stdin': self.stdin, 'stdout': self.stdout, 'stderr': self.stderr, 
             'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
@@ -100,10 +105,10 @@ class Logger():
     def __init__(self):
         self.log = []
 
-    def append_process(self, *args):
+    def add_process(self, *args):
         self.log.append(LogProcess(*args))
 
-    def append_file(self, *args):
+    def add_file(self, *args):
         self.log.append(LogCopiedFile(*args))
 
     def get_log(self):

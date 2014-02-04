@@ -3,11 +3,13 @@ import os
 import subprocess
 from functools import wraps
 
+import logger
+
 class VboxInfo():
     """Helper class, not changing machine state
 
     Those functions are meant to get information about the whole virtualbox state
-    and not limited to a single machine like the Vbox class 
+    and not limited to a single machine like the Vbox class and need no running VM
     """
     def __init__(self):
         self.vb = virtualbox.Virtualbox()
@@ -38,6 +40,8 @@ class Vbox():
         of sessions and machines are not exposed to the user
 
         @osType - must be in >VboxInfo.list_ostypes()
+
+        @basename - must be in >VboxInfo.list_vms()
         """
 
         self.vb = virtualbox.Virtualbox()
@@ -79,6 +83,8 @@ class Vbox():
             self.os = osWindows(self)
 
         self.running = False
+
+        self.log = logger.Logger()
 
 
     @self.check_stopped()   
@@ -239,6 +245,11 @@ class Vbox():
 
     @self.check_running()
     def create_guest_session(self, username="default", password="12345"):
+        """creates a guest session for issuing commands to the guest system
+
+        While the VirtualBox API would support up to 256 simultanious guest 
+        sessions, here only one simultanious guestsession is supported
+        """
 
         self.guestsession = self.session.console.guest.create_session(username,password)
 
@@ -280,6 +291,8 @@ class Vbox():
         """
 
         process, stdout, stderr = self.guestsession.execute(command, arguments, stdin)
+
+        self.log.add_process(process, arguments, stdin, stdout, stderr)
 
     @self.check_running()
     def copy_to_vm(self, source, dest, wait=True):
@@ -354,14 +367,17 @@ class osLinux():
         pass
 
 class osWindows():
-    """Windows specific operations 
+    """Windows specific operations
 
     Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM
+    features, that depend on the opertation system, running in the VM.
+    For this class to work, @shell needs to be the path to a windows powershell!
     """
 
-    def __init__(self,vb):
+    def __init__(self,vb,
+            shell="%%SystemRoot%%\\system32\\WindowsPowerShell\\v.1.0\powershell.exe"):
         self.vb = vb
+        self.shell = shell
 
     def create_user(self, username, password):
         pass
@@ -369,3 +385,23 @@ class osWindows():
     def open_browser(self, website="www.google.com"):
         vb.run_process()
 
+    def uninstall_program(self, program):
+        """remove a program from the guest system
+
+        This only works for progams using msi-based installers
+        """
+        stdin = """$app = Get-WmiObject -Class Win32_Product `
+                     -Filter "Name = '{0}'"
+                $app.Uninstall()
+                """.format(program)
+
+        self.vb.run_process(command=self.shell, stdin=stdin)
+
+    def uninstall_guest_additions(self, version="4.3.6"):
+        """remove the guest additions
+
+        Warning: This can not be undone, since remote running of software is 
+        very limited without guest additions!
+        """
+
+        self.uninstall_programm("Oracle VM VirtualBox Guest Additions"+version)
