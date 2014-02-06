@@ -1,9 +1,11 @@
 import virtualbox
 import os
 import subprocess
+import logger
+import shutil
 from functools import wraps
 
-import logger
+
 
 class VboxInfo():
     """Helper class, not changing machine state
@@ -12,17 +14,23 @@ class VboxInfo():
     and not limited to a single machine like the Vbox class and need no running VM
     """
     def __init__(self):
-        self.vb = virtualbox.Virtualbox()
+        self.vb = virtualbox.VirtualBox()
 
     def list_vms(self):
+        """Lists all VMs that are registered in VirtualBox
+        """
         return "\n".join([vm.name for vm in self.vb.machines])
 
     def list_ostypes(self):
-        return "\n".join([os.id_p for os in vb.guest_os_types])
+        """Lists all osTypes, that the local VirtualBox accepts
+        """
+        return "\n".join([os.id_p for os in self.vb.guest_os_types])
 
 
 
 def check_running(func, errrormsg="Machine needs to be running"):
+    """decorator for use inside Vbox only!
+    """
     def checked(self):
         if not self.running:
             print errrormsg
@@ -31,6 +39,8 @@ def check_running(func, errrormsg="Machine needs to be running"):
     return checked
 
 def check_stopped(func, errrormsg="Machine needs to be stopped"):
+    """decorator for use inside Vbox only!
+    """
     def checked(self):
         if self.running:
             print errrormsg
@@ -62,7 +72,7 @@ class Vbox():
         @basename - must be in >VboxInfo.list_vms()
         """
 
-        self.vb = virtualbox.Virtualbox()
+        self.vb = virtualbox.VirtualBox()
 
         if mode=="clone":
             self.vm = self.vb.create_machine("",clonename,[], osType,"")
@@ -87,6 +97,7 @@ class Vbox():
                 self.progress.wait_for_completion()
 
             self.vb.register_machine(self.vm)
+            self.is_clone=True
         elif mode=="use":
             self.vm = self.vb.find_machine(basename)
 
@@ -149,9 +160,7 @@ class Vbox():
         try:
             self.vm.lock_machine(self.session,virtualbox.library.LockType.shared)
         except:
-            pass
-
-        
+            pass 
 
 
     def unlock(self):
@@ -164,9 +173,10 @@ class Vbox():
         except:
             pass
 
+
     @check_stopped
     def export(self, path="/tmp/disk.vdi", wait=True):
-        """Export a Virtualbox hard disk image
+        """Export a VirtualBox hard disk image
 
         Currently, this will always export the first hard disk
         on the virtual SATA controller
@@ -186,7 +196,6 @@ class Vbox():
             return progress
 
 
-
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
         """Save screenshot to given path
@@ -201,6 +210,7 @@ class Vbox():
         f = open(path, 'wb')
         f.write(png)
 
+
     @check_running
     def start_video(self, path="/tmp/video"):
 
@@ -208,11 +218,13 @@ class Vbox():
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
 
+
     @check_running
     def stop_video(self):
 
         self.session.machine.video_capture_enabled = False
         self.session.machine.save_settings()
+
 
     @check_running
     def time_offset(self,offset=0):
@@ -227,6 +239,7 @@ class Vbox():
 
         self.session.machine.bios_settings.time_offset = offset * 1000
 
+
     @check_running
     def time_speedup(self,speedup=100):
         """Sets relative speed time runs in the vm
@@ -234,8 +247,7 @@ class Vbox():
         The speedup is set in percent, valid values go from 2 to 20000 percent.
         Default resets.
 
-        Args:
-            @speedup - relative speedup in percent
+        @speedup - relative speedup in percent
         """
 
         self.session.console.debugger.virtual_time_rate = speedup
@@ -268,7 +280,8 @@ class Vbox():
         While the VirtualBox API would support up to 256 simultanious guest 
         sessions, here only one simultanious guestsession is supported
         """
-
+        self.username = username
+        self.password = password
         self.guestsession = self.session.console.guest.create_session(username,password)
 
 
@@ -293,8 +306,11 @@ class Vbox():
         self.session.machine.mount_medium("IDE",0,0,iso_path,False)
         self.iso = iso_path
 
+
     @check_running
     def umount_cd(self):
+        """Removes a cd from the emulated IDE CD-drive
+        """
 
         self.session.machine.mount_medium("IDE",0,0,"",False)
 
@@ -305,12 +321,15 @@ class Vbox():
     def run_process(self, command, arguments=[], stdin=''):
         """Runs a process with arguments and stdin in the VM
 
-        This method requires the Virtualbox Guest Additions to be installed
+        This method requires the VirtualBox Guest Additions to be installed
         """
 
         process, stdout, stderr = self.guestsession.execute(command, arguments, stdin)
 
         self.log.add_process(process, arguments, stdin, stdout, stderr)
+
+        return stdout, stderr
+
 
     @check_running
     def copy_to_vm(self, source, dest, wait=True):
@@ -321,24 +340,36 @@ class Vbox():
 
         self.progress = self.guestSession.copy_to(source, destination, [])
 
+        self.log.add_file(source=source, destination=dest)
+
         if wait:
             self.progress.wait_for_completion()
         else:
             return progress
 
 
-    # def check_running(self, errrormsg="Machine needs to be running"):
-    #   if not self.running:
-    #       print errrormsg
-    #   return self.running
+    @check_running
+    def keyboard_input(self, input):
+        session.console.keyboard.put_keys(input)
 
-    # def check_stopped(self, errrormsg="Machine needs to be stopped"):
-    #   if self.running:
-    #       print errrormsg
-    #   return not self.running
+    @check_stopped
+    def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
+        """clean all data exept, what might have been exported
 
+        This should be the last thing to do, just to make sure, we do not clutter
+        our VirtualBox. Since this
+        """
 
+        while (path = self.log.cleanup()) is not False:
+            shutil.rmtree(path, ignore_errors)
 
+        #for clones we also remove the vm data of the clone and the
+        #hdd, to not clutter
+        if self.is_clone and rm_clone:
+            hdd = self.vm.remove()
+            #if the hdd is not attached to any other vm, its save to remove it as well
+            if not hdd.machine_ids():
+                hdd.delete_storage()
 
 
 class osLinux():
@@ -348,24 +379,37 @@ class osLinux():
     features, that depend on the opertation system, running in the VM
     """
 
-    def __init__(self,vb):
+    def __init__(self, vb, term="/usr/bin/xterm"):
         self.vb = vb
+        self.term = term
 
-    def create_user(username,password,):
+    def create_user(self, username, password):
         pass
+
+    def uninstall_program(self, program):
+        """remove a program from the guest system with apt-get
+
+        """
+        stdin="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
+        self.vb.run_process(command=self.term, stdin=stdin)
+
+    def uninstall_guest_additions():
+        self.uninstall_program("virtualbox-guest-*")
+
 
 class osWindows():
     """Windows specific operations
 
     Classes starting with os should all implement the same interface, that offers 
     features, that depend on the opertation system, running in the VM.
-    For this class to work, @shell needs to be the path to a windows powershell!
+    For this class to work, @term needs to be the path to a windows powershell!
+    Expects the operating system to be a MS Windows 7 or newer 
     """
 
     def __init__(self,vb,
-            shell="%%SystemRoot%%\\system32\\WindowsPowerShell\\v.1.0\powershell.exe"):
+            term="%%SystemRoot%%\\system32\\WindowsPowerShell\\v.1.0\powershell.exe"):
         self.vb = vb
-        self.shell = shell
+        self.term = term
 
     def create_user(self, username, password):
         pass
@@ -383,13 +427,14 @@ class osWindows():
                 $app.Uninstall()
                 """.format(program)
 
-        self.vb.run_process(command=self.shell, stdin=stdin)
+        self.vb.run_process(command=self.term, stdin=stdin)
 
     def uninstall_guest_additions(self, version="4.3.6"):
         """remove the guest additions
 
         Warning: This can not be undone, since remote running of software is 
-        very limited without guest additions! You need to know the 
+        very limited without guest additions! You need to know the exact version
+        installed
         """
 
-        self.uninstall_programm("Oracle VM VirtualBox Guest Additions"+version)
+        self.uninstall_program("Oracle VM VirtualBox Guest Additions"+version)

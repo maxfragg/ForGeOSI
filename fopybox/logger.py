@@ -64,10 +64,32 @@ class LogCopiedFile():
             'filesize': self.filesize, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
+    def cleanup(self):
+        return self.tmp
+
     def to_xml(self):
         return toXML(self, nodeName="copiedFile", ignore=['time'])
 
+class LogCdMount():
+    """Stores data about a cd mounted to the VM
 
+    """
+    def __init__(self, path, timeoffset=0, timeRate=0, upTime=0):
+        self.path = path
+        self.realtime = time.time()
+        self.time = time.time() + timeoffset
+        self.timeRate = timeRate
+        self.upTime = upTime
+
+    def get_entry(self):
+        return {'path': self.path, 'realtime': self.realtime, 'time': self.time, 
+            'timeRate': self.timeRate, 'upTime': self.upTime}
+
+    def cleanup(self):
+        return self.path
+
+    def to_xml(self):
+        return toXML(self, nodeName="cd",ignore=['time'])
 
 class LogProcess():
     """Stores data of a single process, running in the VM
@@ -98,7 +120,7 @@ class Logger():
     """A simple logger for fopybox
 
     This logger creates a protocol of actions performed with pyvbox, that altered
-    the virtual machine image. If wished, a xml-export is available.
+    the virtual machine image. If wished, a xml-export is available with get_log
 
     """
 
@@ -111,8 +133,21 @@ class Logger():
     def add_file(self, *args):
         self.log.append(LogCopiedFile(*args))
 
+    def add_cd(self, *args):
+        self.log.append(LogCdMount(*args))
+
     def get_log(self):
         for l in self.log:
             print etree.tostring(l.getXML(), pretty_print=True)
+
+    def cleanup(self):
+        """Gets one path, to clean up at a time
+
+        This destroys the log, so use get_log first!
+        """
+        if not self.log:
+            return False
+        else:
+            return self.log.pop().cleanup()
 
         
