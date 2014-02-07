@@ -155,6 +155,9 @@ class Logger():
     def add_cd(self, *args):
         self.log.append(LogCdMount(*args))
 
+    def add_keyboard(self, *args):
+        self.log.append(LogRawKeyboard(*args))
+
     def get_log(self):
         for l in self.log:
             print etree.tostring(l.getXML(), pretty_print=True)

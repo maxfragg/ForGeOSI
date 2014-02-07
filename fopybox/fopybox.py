@@ -307,6 +307,8 @@ class Vbox():
         self.session.machine.mount_medium("IDE",0,0,iso_path,False)
         self.iso = iso_path
 
+        self.log.add_cd(iso_path)
+
 
     @check_running
     def umount_cd(self):
@@ -363,10 +365,18 @@ class Vbox():
 
 
     @check_running
-    def keyboard_input(self, input):
+    def keyboard_input(self, key_input):
         """sends raw keypresses to the vm
         """
-        session.console.keyboard.put_keys(input)
+        session.console.keyboard.put_keys(key_input)
+
+        self.log.add_keyboard(key_input)
+
+
+    @check_running
+    def mouse_input(self, x, y, pressed=True):
+        pass
+
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
