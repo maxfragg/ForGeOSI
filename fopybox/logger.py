@@ -89,7 +89,7 @@ class LogCdMount():
         return self.path
 
     def to_xml(self):
-        return toXML(self, nodeName="cd",ignore=['time'])
+        return toXML(self, nodeName="cd", ignore=['time'])
 
 class LogProcess():
     """Stores data of a single process, running in the VM
@@ -114,7 +114,26 @@ class LogProcess():
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
     def to_xml(self):
-        return toXML(self, nodeName="process",ignore=['time'])
+        return toXML(self, nodeName="process", ignore=['time'])
+
+class LogRawKeyboard():
+    """Stores raw keyboard input
+    """
+    def __init__(self, key_input, timeoffset=0, timeRate=0, upTime=0):
+        self.key_input = key_input
+        self.realtime = time.time()
+        self.time = time.time() + timeoffset
+        self.timeRate = timeRate
+        self.upTime = upTime
+
+    def get_entry(self):
+        return {'keyboard input': self.key_input, 'realtime': self.realtime, 
+            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+
+    def to_xml(self):
+        return toXML(self, nodeName="keyboard input", ignore=['time'])
+
+
 
 class Logger():
     """A simple logger for fopybox

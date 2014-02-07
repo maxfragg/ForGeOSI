@@ -186,6 +186,7 @@ class Vbox():
 
         clone_hdd = self.vb.create_hard_disk("",path)
         cur_hdd = self.session.machine.get_medium("SATA",0,0)
+        #TODO: support vmdk_raw_disk as well?
         progress = clone_hdd.copy_to(clone_hdd,
             virtualbox.library.MediumVariant.standard,None)
 
@@ -318,17 +319,30 @@ class Vbox():
 
 
     @check_running
-    def run_process(self, command, arguments=[], stdin=''):
+    def run_process(self, command, arguments=[], stdin='', wait=True):
         """Runs a process with arguments and stdin in the VM
 
-        This method requires the VirtualBox Guest Additions to be installed
+        This method requires the VirtualBox Guest Additions to be installed.
+        @flags
         """
 
-        process, stdout, stderr = self.guestsession.execute(command, arguments, stdin)
+        if wait:
+            flags=[virtualbox.library.ProcessCreateFlag.wait_for_std_err,
+                   virtualbox.library.ProcessCreateFlag.wait_for_std_out,
+                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes]
+        else:
+            flags=[virtualbox.library.ProcessCreateFlag.wait_for_process_start_only,
+                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes] 
+
+
+        process, stdout, stderr = self.guestsession.execute(command, arguments, 
+            stdin, flags=flags)
+
 
         self.log.add_process(process, arguments, stdin, stdout, stderr)
 
         return stdout, stderr
+
 
 
     @check_running
@@ -350,6 +364,8 @@ class Vbox():
 
     @check_running
     def keyboard_input(self, input):
+        """sends raw keypresses to the vm
+        """
         session.console.keyboard.put_keys(input)
 
     @check_stopped
@@ -386,6 +402,10 @@ class osLinux():
     def create_user(self, username, password):
         pass
 
+    def open_browser(self, url="www.google.com"):
+
+        vb.run_process(command="/usr/bin/firefox", arguments=["-new-tab",url], wait=False)
+
     def uninstall_program(self, program):
         """remove a program from the guest system with apt-get
 
@@ -394,6 +414,13 @@ class osLinux():
         self.vb.run_process(command=self.term, stdin=stdin)
 
     def uninstall_guest_additions():
+        """remove the guest additions
+
+        Warning: This can not be undone, since remote running of software is 
+        very limited without guest additions! You need to know the exact version
+        installed
+        """
+
         self.uninstall_program("virtualbox-guest-*")
 
 
@@ -412,10 +439,23 @@ class osWindows():
         self.term = term
 
     def create_user(self, username, password):
-        pass
+        
+        stdin = """$objOu = [ADSI]"WinNT://$computer"
+                $objUser = $objOU.Create("User", {0})
+                $objUser.setpassword({1})
+                $objUser.SetInfo()
 
-    def open_browser(self, website="www.google.com"):
-        vb.run_process()
+                """.format(username, password)
+
+    def open_browser(self, url="www.google.com"):
+
+        stdin = """$ie = new­object ­com "InternetExplorer.Application"
+                $ie.navigate("{0}")
+                $ie.visible = $true
+
+                """.format(url)
+
+        vb.run_process(command=self.term, stdin=stdin)
 
     def uninstall_program(self, program):
         """remove a program from the guest system
@@ -425,6 +465,7 @@ class osWindows():
         stdin = """$app = Get-WmiObject -Class Win32_Product `
                      -Filter "Name = '{0}'"
                 $app.Uninstall()
+
                 """.format(program)
 
         self.vb.run_process(command=self.term, stdin=stdin)
