@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-2 -*-
+
 import virtualbox
 import os
 import subprocess
@@ -25,6 +28,34 @@ class VboxInfo():
         """Lists all osTypes, that the local VirtualBox accepts
         """
         return "\n".join([os.id_p for os in self.vb.guest_os_types])
+
+class VboxConfig():
+    """helper class, changing global state!
+
+    """
+    def __init__(self):
+        self.vb = virtualbox.VirtualBox()
+        self.net = False
+        self.network_name = ""
+
+    def get_nat_network(self, network_name="testnet"):
+        """creates a natnetwork, if none of the name exists
+        """
+
+        try:
+            self.net = self.vb.find_nat_network_by_name(network_name)
+            self.dhcp = self.vb.find_dhcp_server_by_network_name(network_name)
+                
+        except:
+            self.net = vb.create_nat_network(network_name)
+            self.dhcp = vb.create_dhcp_server(network_name)
+
+        self.net.enabled = True
+        self.network_name = network_name
+        return self.net
+
+    def get_network_name(self):
+        return self.network_name
 
 
 
@@ -83,11 +114,12 @@ class Vbox():
             try:
                 _snap = _orig.findSnapshot(linkedName)
             except:
-                _orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
+                #_orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
 
-                _orig_session.console.take_snapshot(linkedName, "")
+                self.progress = _orig_session.console.take_snapshot(linkedName, "")
+                self.progress.wait_for_completion()
                 _snap = _orig.findSnapshot(linkedName)
-                _orig_session.unlock_machine()    
+                #_orig_session.unlock_machine()    
 
             self.progress =  _snap.machine.clone_to(
                     self.vm,virtualbox.library.CloneMode.machine_state,
@@ -137,7 +169,6 @@ class Vbox():
     @check_running
     def stop(self, wait=True):
         """Stop a running machine
-
         """
 
         self.lock()
@@ -214,7 +245,8 @@ class Vbox():
 
     @check_running
     def start_video(self, path="/tmp/video"):
-
+        """Record video of VM-Screen
+        """
         self.session.machine.video_capture_file = "/tmp/video"
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
@@ -222,7 +254,8 @@ class Vbox():
 
     @check_running
     def stop_video(self):
-
+        """Stop video recording
+        """
         self.session.machine.video_capture_enabled = False
         self.session.machine.save_settings()
 
@@ -255,23 +288,26 @@ class Vbox():
 
 
     @check_running
-    def start_network_trace(self, path="/tmp/trace.pcap"):
+    def start_network_trace(self, path="/tmp/trace.pcap", adapter=0):
+        """Trace network traffic on a certain network adapter
+        """
 
-
-        self.network = session.machine.get_network_adapter(0)
+        self.network = session.machine.get_network_adapter(adapter)
 
         self.network.trace_file = path
-        self.network.traceEnabled = True
-        self.session.machine.saveSettings()
+        self.network.trace_enabled = True
+        self.session.machine.save_settings()
 
 
     @check_running
-    def stop_network_trace(self):
+    def stop_network_trace(self, adapter=0):
+        """Stop network trace for one adapter
+        """
 
-        self.network = session.machine.get_network_adapter(0)
+        self.network = session.machine.get_network_adapter(adapter=0)
 
-        self.network.traceEnabled = False
-        self.session.machine.saveSettings()
+        self.network.trace_enabled = False
+        self.session.machine.save_settings()
 
 
     @check_running
@@ -375,8 +411,27 @@ class Vbox():
 
     @check_running
     def mouse_input(self, x, y, pressed=True):
+        """sends raw mouse movements and clicks to the vm
+        """
         pass
 
+
+    def add_to_nat_network(self, network_name="test_net", adapter=0):
+        """Adds the vm to a nat-network
+
+        This enables multiple virtual machines to see each other and exchange 
+        data. The network has to be created first with 
+        VboxConfig.get_nat_network(). Using adapter 0 will reconfigure the 
+        default network adapter, use numbers 2-7 for additional adapters.
+        """
+
+        self.network = self.session.get_network_adapter(adapter)
+        self.network.nat_network = network_name
+        self.network.attachment_type = virtualbox.library.NetworkAttachmentType.nat_network
+        #allow VMs to see each other
+        self.network.promisc_mode_policy = virtualbox.library.NetworkAdapterPromiscModePolicy.allow_network
+        self.network.enabled = True
+        self.session.machine.save_settings()
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
@@ -385,9 +440,10 @@ class Vbox():
         This should be the last thing to do, just to make sure, we do not clutter
         our VirtualBox. Since this
         """
-
-        while (path = self.log.cleanup()) is not False:
+        path = self.log.cleanup()
+        while path is not False:
             shutil.rmtree(path, ignore_errors)
+            path = self.log.cleanup()
 
         #for clones we also remove the vm data of the clone and the
         #hdd, to not clutter
@@ -459,11 +515,11 @@ class osWindows():
 
     def open_browser(self, url="www.google.com"):
 
-        stdin = """$ie = newÂ­object Â­com "InternetExplorer.Application"
+        stdin = '''$ie = new­object ­com "InternetExplorer.Application"
                 $ie.navigate("{0}")
                 $ie.visible = $true
 
-                """.format(url)
+                '''.format(url)
 
         vb.run_process(command=self.term, stdin=stdin)
 
