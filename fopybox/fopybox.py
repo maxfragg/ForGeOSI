@@ -6,8 +6,9 @@ import os
 import subprocess
 import logger #local import
 import shutil
-from functools import wraps
-
+#from functools import wraps
+#needs python-decorator, needed for signature preserving decorators
+from decorator import decorator 
 
 
 class VboxInfo():
@@ -59,27 +60,41 @@ class VboxConfig():
 
 
 
-def check_running(func, errrormsg="Machine needs to be running"):
+def _check_running(func, errrormsg="Machine needs to be running"):
     """decorator for use inside Vbox only!
     """
+    @wraps(func)
     def checked(self, *args, **kwargs):
         if not self.running:
             print errrormsg
             return
         func(self, *args, **kwargs)
-    checked.__doc__ = func.__doc__    
+
     return checked
 
-def check_stopped(func, errrormsg="Machine needs to be stopped"):
+def check_running(func):
+    """preserves the original signature of decorated function
+    """
+    return decorator(_check_running, func)
+
+def _check_stopped(func, errrormsg="Machine needs to be stopped"):
     """decorator for use inside Vbox only!
     """
+    @wraps(func)
     def checked(self, *args, **kwargs):
         if self.running:
             print errrormsg
             return
         func(self, *args, **kwargs)
-    checked.__doc__ = func.__doc__
+    #preseve the original signature of the function!
+    #checked.__doc__ = func.__doc__
+    #update_wrapper(checked, func)
     return checked
+
+def check_stopped(func):
+    """preserves the original signature of decorated function
+    """
+    return decorator(_check_stopped, func)
 
 
 class Vbox():
@@ -93,7 +108,7 @@ class Vbox():
     
     def __init__(self, basename="ubuntu-lts-base",
             clonename="testvm", mode="clone", linkedName="Forensig20Linked",
-            osType="Linux26", wait=True):
+            osType="Linux26", username="default", password="12345", wait=True):
         """Initialises a virtualbox instance
 
         The new instance of this class can either reuse an existing virtual 
@@ -137,6 +152,8 @@ class Vbox():
 
         self.session = self.vm.create_session()
 
+        self.username = username
+        self.password = password
 
         #use vm property to find systemtype
         if osType in ["Linux26","Linux26_64","Ubuntu","Ubuntu_64"]:
@@ -313,15 +330,14 @@ class Vbox():
 
 
     @check_running
-    def create_guest_session(self, username="default", password="12345"):
+    def create_guest_session(self):
         """creates a guest session for issuing commands to the guest system
 
         While the VirtualBox API would support up to 256 simultanious guest 
         sessions, here only one simultanious guestsession is supported
         """
-        self.username = username
-        self.password = password
-        self.guestsession = self.session.console.guest.create_session(username,password)
+
+        self.guestsession = self.session.console.guest.create_session(self.username,self.password)
 
 
     @check_running
@@ -364,7 +380,6 @@ class Vbox():
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
-        @flags
         """
 
         if wait:
@@ -429,13 +444,22 @@ class Vbox():
         default network adapter, use numbers 2-7 for additional adapters.
         """
 
-        self.network = self.session.get_network_adapter(adapter)
+        self.network = self.session.machine.get_network_adapter(adapter)
         self.network.nat_network = network_name
         self.network.attachment_type = virtualbox.library.NetworkAttachmentType.nat_network
         #allow VMs to see each other
         self.network.promisc_mode_policy = virtualbox.library.NetworkAdapterPromiscModePolicy.allow_network
         self.network.enabled = True
         self.session.machine.save_settings()
+
+    @check_running
+    def get_ip(self, adapter=0):
+        """returns the IPv4 address of the given adapter
+
+        Needs guest additions installed
+        """
+        return vbox.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
+            +adapter+"/V4/IP")
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
@@ -471,13 +495,16 @@ class osLinux():
         self.env = ["DISPLAY=:0", "USER="+vb.username, 
             "HOME=/home/"+vb.username] + env
 
+
     def create_user(self, username, password):
         pass
+
 
     def open_browser(self, url="www.google.com"):
 
         self.vb.run_process(command="/usr/bin/firefox", 
-            arguments=["-new-tab",url], environment=self.env, wait=False)
+            arguments=["-new-tab",url,"&"], environment=self.env, wait=False)
+
 
     def uninstall_program(self, program):
         """remove a program from the guest system with apt-get
@@ -485,6 +512,7 @@ class osLinux():
         """
         stdin="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
         self.vb.run_process(command=self.term, stdin=stdin, environment=self.env,)
+
 
     def uninstall_guest_additions():
         """remove the guest additions
@@ -529,6 +557,7 @@ class osWindows():
                 '''.format(url)
 
         vb.run_process(command=self.term, stdin=stdin)
+
 
     def uninstall_program(self, program):
         """remove a program from the guest system
