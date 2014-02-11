@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-2 -*-
 
-import virtualbox
+import virtualbox #pyvbox
 import os
 import subprocess
-import logger
+import logger #local import
 import shutil
 from functools import wraps
 
@@ -62,21 +62,23 @@ class VboxConfig():
 def check_running(func, errrormsg="Machine needs to be running"):
     """decorator for use inside Vbox only!
     """
-    def checked(self):
+    def checked(self, *args, **kwargs):
         if not self.running:
             print errrormsg
             return
-        func(self)
+        func(self, *args, **kwargs)
+    checked.__doc__ = func.__doc__    
     return checked
 
 def check_stopped(func, errrormsg="Machine needs to be stopped"):
     """decorator for use inside Vbox only!
     """
-    def checked(self):
+    def checked(self, *args, **kwargs):
         if self.running:
             print errrormsg
             return
-        func(self)
+        func(self, *args, **kwargs)
+    checked.__doc__ = func.__doc__
     return checked
 
 
@@ -112,13 +114,13 @@ class Vbox():
             _orig_session = _orig.create_session()
 
             try:
-                _snap = _orig.findSnapshot(linkedName)
+                _snap = _orig.find_snapshot(linkedName)
             except:
                 #_orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
 
                 self.progress = _orig_session.console.take_snapshot(linkedName, "")
                 self.progress.wait_for_completion()
-                _snap = _orig.findSnapshot(linkedName)
+                _snap = _orig.find_snapshot(linkedName)
                 #_orig_session.unlock_machine()    
 
             self.progress =  _snap.machine.clone_to(
@@ -153,8 +155,8 @@ class Vbox():
         """start a machine
 
         The @type "headless" means, the machine runs without any gui, the only 
-        sensible way on a remote server. This parameter is changable for 
-        debugging only
+        sensible way on a remote server. This parameter is changable to "gui" 
+        for debugging only
         """
 
         self.progress = self.vm.launch_vm_process(self.session, type, '')
@@ -247,7 +249,7 @@ class Vbox():
     def start_video(self, path="/tmp/video"):
         """Record video of VM-Screen
         """
-        self.session.machine.video_capture_file = "/tmp/video"
+        self.session.machine.video_capture_file = path
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
 
@@ -357,7 +359,8 @@ class Vbox():
 
 
     @check_running
-    def run_process(self, command, arguments=[], stdin='', wait=True):
+    def run_process(self, command, arguments=[], stdin='', environment=[],
+            wait=True):
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
@@ -373,8 +376,9 @@ class Vbox():
                    virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes] 
 
 
-        process, stdout, stderr = self.guestsession.execute(command, arguments, 
-            stdin, flags=flags)
+        process, stdout, stderr = self.guestsession.execute(command=command, 
+            arguments=arguments, stdin=stdin, environment=environment, 
+            flags=flags)
 
 
         self.log.add_process(process, arguments, stdin, stdout, stderr)
@@ -390,7 +394,7 @@ class Vbox():
         This leaves no plausible trace for fakeing, so use with care
         """
 
-        self.progress = self.guestSession.copy_to(source, destination, [])
+        self.progress = self.guestsession.copy_to(source, destination, [])
 
         self.log.add_file(source=source, destination=dest)
 
@@ -450,7 +454,7 @@ class Vbox():
         if self.is_clone and rm_clone:
             hdd = self.vm.remove()
             #if the hdd is not attached to any other vm, its save to remove it as well
-            if not hdd.machine_ids():
+            if not hdd.machine_ids:
                 hdd.delete_storage()
 
 
@@ -461,23 +465,26 @@ class osLinux():
     features, that depend on the opertation system, running in the VM
     """
 
-    def __init__(self, vb, term="/usr/bin/xterm"):
+    def __init__(self, vb, term="/usr/bin/xterm", env=[]):
         self.vb = vb
         self.term = term
+        self.env = ["DISPLAY=:0", "USER="+vb.username, 
+            "HOME=/home/"+vb.username] + env
 
     def create_user(self, username, password):
         pass
 
     def open_browser(self, url="www.google.com"):
 
-        vb.run_process(command="/usr/bin/firefox", arguments=["-new-tab",url], wait=False)
+        self.vb.run_process(command="/usr/bin/firefox", 
+            arguments=["-new-tab",url], environment=self.env, wait=False)
 
     def uninstall_program(self, program):
         """remove a program from the guest system with apt-get
 
         """
         stdin="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
-        self.vb.run_process(command=self.term, stdin=stdin)
+        self.vb.run_process(command=self.term, stdin=stdin, environment=self.env,)
 
     def uninstall_guest_additions():
         """remove the guest additions
