@@ -6,7 +6,7 @@ import os
 import subprocess
 import logger #local import
 import shutil
-#from functools import wraps
+import time
 #needs python-decorator, needed for signature preserving decorators
 from decorator import decorator 
 
@@ -40,7 +40,9 @@ class VboxConfig():
         self.network_name = ""
 
     def get_nat_network(self, network_name="testnet"):
-        """creates a natnetwork, if none of the name exists
+        """creates a natnetwork, if none of the name exists.
+        
+        This is needed to enabled networking between different VM instances
         """
 
         try:
@@ -59,42 +61,34 @@ class VboxConfig():
         return self.network_name
 
 
-
-def _check_running(func, errrormsg="Machine needs to be running"):
-    """decorator for use inside Vbox only!
+@decorator
+def check_running(func, *args, **kwargs):
+    """decorator for use inside Vbox class only!
     """
-    @wraps(func)
-    def checked(self, *args, **kwargs):
-        if not self.running:
-            print errrormsg
-            return
-        func(self, *args, **kwargs)
+    if not args[0].running:
+        print "Machine needs to be running"
+        return
+    func(*args, **kwargs)
 
-    return checked
 
-def check_running(func):
-    """preserves the original signature of decorated function
+@decorator
+def check_stopped(func, *args, **kwargs):
+    """decorator for use inside Vbox class only!
     """
-    return decorator(_check_running, func)
+    if args[0].running:
+        print "Machine needs to be stopped"
+        return
+    func(*args, **kwargs)
 
-def _check_stopped(func, errrormsg="Machine needs to be stopped"):
-    """decorator for use inside Vbox only!
+@decorator
+def check_guestsession(func, *args, **kwargs):
+    """decorator for use inside Vbox class only!
     """
-    @wraps(func)
-    def checked(self, *args, **kwargs):
-        if self.running:
-            print errrormsg
-            return
-        func(self, *args, **kwargs)
-    #preseve the original signature of the function!
-    #checked.__doc__ = func.__doc__
-    #update_wrapper(checked, func)
-    return checked
+    if not args[0].guestsession:
+        print "creating guestsession"
+        args[0].guestsession = args[0].create_guest_session()
+    func(*args, **kwargs)   
 
-def check_stopped(func):
-    """preserves the original signature of decorated function
-    """
-    return decorator(_check_stopped, func)
 
 
 class Vbox():
@@ -115,9 +109,12 @@ class Vbox():
         machine or create a new one, based on a existing template. The concepts
         of sessions and machines are not exposed to the user
 
-        @osType - must be in >VboxInfo.list_ostypes()
-
-        @basename - must be in >VboxInfo.list_vms()
+        Arguments:
+            osType - must be in VboxInfo.list_ostypes()
+            basename - must be in VboxInfo.list_vms()
+            mode - must be "use" or "clone"
+            wait - Setting wait to False enables async actions, but might break 
+                things, use with care!
         """
 
         self.vb = virtualbox.VirtualBox()
@@ -151,7 +148,7 @@ class Vbox():
             self.vm = self.vb.find_machine(basename)
 
         self.session = self.vm.create_session()
-
+        self.guestsession = False
         self.username = username
         self.password = password
 
@@ -176,6 +173,8 @@ class Vbox():
         for debugging only
         """
 
+        self.unlock()
+
         self.progress = self.vm.launch_vm_process(self.session, type, '')
 
         self.running = True
@@ -185,21 +184,34 @@ class Vbox():
         else:
             return self.progress
 
+
     @check_running
-    def stop(self, wait=True):
+    def stop(self, shutdown=True, wait=True):
         """Stop a running machine
-        """
+        Arguments:
+            shutdown - will send acpi signal to the machine and 
+                might take some time for the machine to power down.
+                Otherwise the machine will just be turned off, and its state in
+                virtualbox will be "aborted"
+        """  
 
-        self.lock()
-        self.progress = self.session.console.power_down()
+        if shutdown:
+            self.session.console.power_button()
+            if wait:
+                while (self.session.state > 1):
+                    time.sleep(5)
+            self.running = False
 
-        self.running = False
-
-        if wait:
-            self.progress.wait_for_completion()
-            self.unlock()
         else:
-            return self.progress
+            self.progress = self.session.console.power_down()
+            if wait:
+                self.progress.wait_for_completion()
+                self.unlock()
+                self.running = False
+            else:
+                self.running = False
+                return self.progress
+           
 
 
     def lock(self):
@@ -250,8 +262,8 @@ class Vbox():
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
         """Save screenshot to given path
-
-        @path - path, where the png image should be created
+        Arguments:
+            path - path, where the png image should be created
         """
 
         h, w, d, x, y = self.session.console.display.get_screen_resolution(0)
@@ -282,12 +294,10 @@ class Vbox():
     @check_running
     def time_offset(self,offset=0):
         """Sets a time offset in seconds
-
-        The @offset is set in the bios clock of the virtual machine, multiplied 
-        by 1000 because the default miliseconds are not usefull for our usecase.
         Default resets.
 
-        @offset - time in miliseconds
+        Arguments:
+            offset - time in seconds
         """
 
         self.session.machine.bios_settings.time_offset = offset * 1000
@@ -300,7 +310,8 @@ class Vbox():
         The speedup is set in percent, valid values go from 2 to 20000 percent.
         Default resets.
 
-        @speedup - relative speedup in percent
+        Arguments:
+            speedup - relative speedup in percent
         """
 
         self.session.console.debugger.virtual_time_rate = speedup
@@ -375,25 +386,38 @@ class Vbox():
 
 
     @check_running
+    @check_guestsession
     def run_process(self, command, arguments=[], stdin='', environment=[],
-            wait=True):
+             timeout=0, wait=True):
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
+
+        Arguments:
+            stdin - only used, if wait=True, this is send to the stdin of the 
+                process after its creation
+            timeout - This is a timeout in miliseconds, which determines, when 
+                the process will be killed, 0 will disable the timeout
+            wait - selects if the process should be created syncronous with input 
+                or if this function will return, while the porcess inside the VM
+                is still running
         """
 
         if wait:
-            flags=[virtualbox.library.ProcessCreateFlag.wait_for_std_err,
-                   virtualbox.library.ProcessCreateFlag.wait_for_std_out,
-                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes]
+            process, stdout, stderr = self.guestsession.execute(command=command, 
+            arguments=arguments, stdin=stdin, environment=environment, 
+            timeout=timeout)
+
         else:
             flags=[virtualbox.library.ProcessCreateFlag.wait_for_process_start_only,
-                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes] 
+                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes]
 
+            process = self.guestsession.process_create(command=command, 
+                arguments=arguments, environment=environment, flags=flags,
+                timeout = timeout)
 
-        process, stdout, stderr = self.guestsession.execute(command=command, 
-            arguments=arguments, stdin=stdin, environment=environment, 
-            flags=flags)
+            stdout = ""
+            stderr = ""
 
 
         self.log.add_process(process, arguments, stdin, stdout, stderr)
@@ -403,18 +427,19 @@ class Vbox():
 
 
     @check_running
+    @check_guestsession
     def copy_to_vm(self, source, dest, wait=True):
         """Copy a file form outside into the VM
 
         This leaves no plausible trace for fakeing, so use with care
         """
 
-        self.progress = self.guestsession.copy_to(source, destination, [])
+        progress = self.guestsession.copy_to(source, destination, [])
 
         self.log.add_file(source=source, destination=dest)
 
         if wait:
-            self.progress.wait_for_completion()
+            progress.wait_for_completion()
         else:
             return progress
 
@@ -434,7 +459,7 @@ class Vbox():
         """
         pass
 
-
+    @check_running
     def add_to_nat_network(self, network_name="test_net", adapter=0):
         """Adds the vm to a nat-network
 
@@ -466,7 +491,7 @@ class Vbox():
         """clean all data exept, what might have been exported
 
         This should be the last thing to do, just to make sure, we do not clutter
-        our VirtualBox. Since this
+        our VirtualBox.
         """
         path = self.log.cleanup()
         while path is not False:
@@ -496,14 +521,41 @@ class osLinux():
             "HOME=/home/"+vb.username] + env
 
 
+    def run_shell_cmd(self, command, close_shell=True):
+        """runs a command inside the default shell of the user
+        """
+        if close_shell:
+            command = command + "\n  exit\n"
+        else:
+            command = command + "\n"
+
+        self.vb.run_process(command=self.term, stdin=command, 
+            environment=self.env, wait=True)
+
+
+    def copy_file(self, source, destination):
+        pass
+
+
+    def move_file(self, source, destination):
+        pass
+
     def create_user(self, username, password):
         pass
 
 
-    def open_browser(self, url="www.google.com"):
+    def open_browser(self, url="www.google.com", method="shell"):
+        """Opens a firefox browser with the given url
+        Arguments:
+            method - decide how to run the browser, currently "direct" and 
+                "shell" are available 
+        """
 
-        self.vb.run_process(command="/usr/bin/firefox", 
-            arguments=["-new-tab",url,"&"], environment=self.env, wait=False)
+        if method == "direct":
+            self.vb.run_process(command="/usr/bin/firefox", 
+                arguments=["-new-tab",url], environment=self.env, wait=False)
+        elif method == "shell":
+            self.run_shell_cmd(command=command+"-new-tab"+url)
 
 
     def uninstall_program(self, program):
@@ -518,8 +570,7 @@ class osLinux():
         """remove the guest additions
 
         Warning: This can not be undone, since remote running of software is 
-        very limited without guest additions! You need to know the exact version
-        installed
+        very limited without guest additions!
         """
 
         self.uninstall_program("virtualbox-guest-*")
@@ -539,6 +590,15 @@ class osWindows():
         self.vb = vb
         self.term = term
 
+
+    def copy_file(self, source, destination):
+        pass
+
+
+    def move_file(self, source, destination):
+        pass
+
+
     def create_user(self, username, password):
         
         stdin = """$objOu = [ADSI]"WinNT://$computer"
@@ -547,6 +607,7 @@ class osWindows():
                 $objUser.SetInfo()
 
                 """.format(username, password)
+
 
     def open_browser(self, url="www.google.com"):
 
@@ -571,6 +632,7 @@ class osWindows():
                 """.format(program)
 
         self.vb.run_process(command=self.term, stdin=stdin)
+
 
     def uninstall_guest_additions(self, version="4.3.6"):
         """remove the guest additions
