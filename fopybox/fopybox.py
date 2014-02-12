@@ -534,11 +534,14 @@ class osLinux():
 
 
     def copy_file(self, source, destination):
-        pass
+        
+        self.run_shell_cmd("cp "+source+" "+destination)
 
 
     def move_file(self, source, destination):
-        pass
+        
+        self.run_shell_cmd("mv "+source+" "+destination)
+
 
     def create_user(self, username, password):
         pass
@@ -589,14 +592,27 @@ class osWindows():
             term="%%SystemRoot%%\\system32\\WindowsPowerShell\\v.1.0\powershell.exe"):
         self.vb = vb
         self.term = term
+        self.cmd ="%%SystemRoot%%\\system32\\cmd.exe" 
+
+
+    def run_shell_cmd(self, command, cmd=True):
+        """runs a command inside the default shell of the user or in the legacy
+        cmd.exe
+        """
+        if cmd:
+            return self.vb.run_process(command=self.cmd, arguments=['/C', command])
+        else:
+            return self.vb.run_process(command=self.term, stdin=command+"\n")
 
 
     def copy_file(self, source, destination):
-        pass
+        
+        self.run_shell_cmd(command="copy "+source+" "+destination, cmd=True)
 
 
     def move_file(self, source, destination):
-        pass
+        
+        self.run_shell_cmd(command="move "+source+" "+destination, cmd=True)
 
 
     def create_user(self, username, password):
@@ -608,6 +624,8 @@ class osWindows():
 
                 """.format(username, password)
 
+        self.vb.run_process(command=self.term, stdin=stdin)
+
 
     def open_browser(self, url="www.google.com"):
 
@@ -617,7 +635,7 @@ class osWindows():
 
                 '''.format(url)
 
-        vb.run_process(command=self.term, stdin=stdin)
+        self.vb.run_process(command=self.term, stdin=stdin)
 
 
     def uninstall_program(self, program):
