@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-
+
 import time
 import shutil
 import uuid
@@ -113,6 +116,9 @@ class LogProcess():
             'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
+    def cleanup(self):
+        return False
+
     def to_xml(self):
         return toXML(self, nodeName="process", ignore=['time'])
 
@@ -130,10 +136,50 @@ class LogRawKeyboard():
         return {'keyboard input': self.key_input, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
+    def cleanup(self):
+        return False
+
     def to_xml(self):
         return toXML(self, nodeName="keyboard input", ignore=['time'])
 
+class LogVM():
+    """saves general properties of one VM"""
+    def __init__(self, vmname, basename, osType, username, password):  
+        self.vmname = vmname
+        self.basename = basename
+        self.osType = osType
+        self.username = username
+        self.password = password
 
+    def get_entry(self):
+        return {'vmname': self.vmname, 'basename': self.basename, 
+            'osType': self.osType, 'username': self.username, 
+            'password': password}
+
+    def cleanup(self):
+        return False
+
+    def to_xml(self):
+        return toXML(self, nodeName="VM Properties")
+
+class LogInterface():
+    """This is just an example, of the logging class interface
+
+    every logger needs to implement this interface"""
+    def __init__(self, arg):
+        self.arg = arg
+
+    def get_entry(self):
+        return {'arg': self.arg}
+
+    def cleanup(self):
+        """return a path on the host, where data needs to be deleted or False
+        """
+        return False
+
+    def to_xml(self):
+        return toXML(self, nodeName="LogInterface")
+        
 
 class Logger():
     """A simple logger for fopybox
@@ -145,6 +191,9 @@ class Logger():
 
     def __init__(self):
         self.log = []
+
+    def add_vm(self, *args):
+        self.log.append(LogVM(*args))
 
     def add_process(self, *args):
         self.log.append(LogProcess(*args))
@@ -170,6 +219,9 @@ class Logger():
         if not self.log:
             return False
         else:
-            return self.log.pop().cleanup()
+            path = self.log.pop().cleanup()
+            while path is False:
+                path = self.log.pop().cleanup()
+            return return path
 
         

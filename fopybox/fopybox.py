@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: iso-8859-15 -*-
 
 import virtualbox #pyvbox
 import os
@@ -20,15 +20,18 @@ class VboxInfo():
     def __init__(self):
         self.vb = virtualbox.VirtualBox()
 
+
     def list_vms(self):
         """Lists all VMs that are registered in VirtualBox
         """
         return "\n".join([vm.name for vm in self.vb.machines])
 
+
     def list_ostypes(self):
         """Lists all osTypes, that the local VirtualBox accepts
         """
         return "\n".join([os.id_p for os in self.vb.guest_os_types])
+
 
 class VboxConfig():
     """helper class, changing global state!
@@ -38,6 +41,7 @@ class VboxConfig():
         self.vb = virtualbox.VirtualBox()
         self.net = False
         self.network_name = ""
+
 
     def get_nat_network(self, network_name="testnet"):
         """creates a natnetwork, if none of the name exists.
@@ -56,6 +60,7 @@ class VboxConfig():
         self.net.enabled = True
         self.network_name = network_name
         return self.net
+
 
     def get_network_name(self):
         return self.network_name
@@ -80,6 +85,7 @@ def check_stopped(func, *args, **kwargs):
         return
     func(*args, **kwargs)
 
+
 @decorator
 def check_guestsession(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
@@ -88,7 +94,6 @@ def check_guestsession(func, *args, **kwargs):
         print "creating guestsession"
         args[0].guestsession = args[0].create_guest_session()
     func(*args, **kwargs)   
-
 
 
 class Vbox():
@@ -162,6 +167,7 @@ class Vbox():
         self.running = False
 
         self.log = logger.Logger()
+        self.log.add_vm(clonename, basename, osType, username, password)
 
 
     @check_stopped  
@@ -201,6 +207,7 @@ class Vbox():
                 while (self.session.state > 1):
                     time.sleep(5)
             self.running = False
+            self.guestsession = False
 
         else:
             self.progress = self.session.console.power_down()
@@ -208,8 +215,10 @@ class Vbox():
                 self.progress.wait_for_completion()
                 self.unlock()
                 self.running = False
+                self.guestsession = False
             else:
                 self.running = False
+                self.guestsession = False
                 return self.progress
            
 
@@ -237,17 +246,16 @@ class Vbox():
 
 
     @check_stopped
-    def export(self, path="/tmp/disk.vdi", wait=True):
+    def export(self, path="/tmp/disk.vdi", wait=True, controller="SATA", port=0, 
+        disk=0):
         """Export a VirtualBox hard disk image
 
-        Currently, this will always export the first hard disk
-        on the virtual SATA controller
+        By default, it will export the first disk on the sata controller, which 
+        is usually the boot device, in the default config of virtualbox
         """
 
-        self.lock()
-
         clone_hdd = self.vb.create_hard_disk("",path)
-        cur_hdd = self.session.machine.get_medium("SATA",0,0)
+        cur_hdd = self.session.machine.get_medium(controller,port,disk)
         #TODO: support vmdk_raw_disk as well?
         progress = clone_hdd.copy_to(clone_hdd,
             virtualbox.library.MediumVariant.standard,None)
