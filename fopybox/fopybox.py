@@ -180,9 +180,10 @@ class Vbox():
     def start(self, type="headless", wait=True):
         """start a machine
 
-        The @type "headless" means, the machine runs without any gui, the only 
-        sensible way on a remote server. This parameter is changable to "gui" 
-        for debugging only
+        Arguments:
+            type - "headless" means, the machine runs without any gui, the only 
+                sensible way on a remote server. This parameter is changable to 
+                "gui" for debugging only
         """
 
         self.unlock()
@@ -193,7 +194,7 @@ class Vbox():
 
         if wait:
             self.progress.wait_for_completion()
-            while (self.vm.state != 5):
+            while (self.session.console.guest.additions_run_level < 2):
                 time.sleep(5)
         else:
             return self.progress
