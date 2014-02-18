@@ -28,7 +28,7 @@ def toXML(classElement, **kwargs):
     return node
 
 class LogCopiedFile():
-    """Stores data of a single file, copyed to the VM
+    """Stores data of a single file, copied to the VM
 
     """
     def __init__(self, source, destination, timeoffset=0, timeRate=100, upTime=0):
@@ -142,6 +142,34 @@ class LogRawKeyboard():
     def to_xml(self):
         return toXML(self, nodeName="keyboard input", ignore=['time'])
 
+
+class LogMouse():
+    """Stores raw mouse input
+    """
+    def __init__(self, x, y, lmb, mmb, rmb, timeoffset=0, timeRate=0, upTime=0):
+        self.x = x
+        self.y = y
+        self.lmb = lmb
+        self.mmb = mmb
+        self.rmb = rmb
+        self.realtime = time.time()
+        self.time = time.time() + timeoffset
+        self.timeRate = timeRate
+        self.upTime = upTime
+
+    def get_entry(self):
+        return {'x': self.x, 'y': self.y, 'left mouse button': self.lmb,
+        'middle mouse button': self.mmb, 'right mouse button': self.rmb,
+        'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate,
+        'upTime': self.upTime}
+
+    def cleanup(self):
+        return False
+
+    def to_xml(self):
+        return toXML(self, nodeName="mouse input", ignore=['time'])
+
+
 class LogVM():
     """saves general properties of one VM"""
     def __init__(self, vmname, basename, osType, username, password):  
@@ -161,6 +189,7 @@ class LogVM():
 
     def to_xml(self):
         return toXML(self, nodeName="VM Properties")
+
 
 class LogInterface():
     """This is just an example, of the logging class interface
@@ -205,6 +234,9 @@ class Logger():
         self.log.append(LogCdMount(*args))
 
     def add_keyboard(self, *args):
+        self.log.append(LogRawKeyboard(*args))
+
+    def add_mouse(self, *args):
         self.log.append(LogRawKeyboard(*args))
 
     def get_log(self):

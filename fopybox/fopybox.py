@@ -204,7 +204,7 @@ class Vbox():
         if shutdown:
             self.session.console.power_button()
             if wait:
-                while (self.session.state > 1):
+                while (self.vm.state > 1):
                     time.sleep(5)
             self.running = False
             self.guestsession = False
@@ -390,8 +390,6 @@ class Vbox():
 
         self.session.machine.mount_medium("IDE",0,0,"",False)
 
-        #TODO: maybe remove self.iso afterwards
-
 
     @check_running
     @check_guestsession
@@ -433,6 +431,15 @@ class Vbox():
         return stdout, stderr
 
 
+    @check_running
+    @check_guestsession
+    def make_dir(self,directory):
+        """Creates a directory and all intermediate ones
+
+        use os specific ones over this command!
+        """
+        self.guestsession.makedirs(directory)
+
 
     @check_running
     @check_guestsession
@@ -455,17 +462,54 @@ class Vbox():
     @check_running
     def keyboard_input(self, key_input):
         """sends raw keypresses to the vm
+
+        avoid this method, as result tends to be unreliable
         """
-        session.console.keyboard.put_keys(key_input)
+
+        self.session.console.keyboard.put_keys(key_input)
 
         self.log.add_keyboard(key_input)
 
 
     @check_running
-    def mouse_input(self, x, y, pressed=True):
-        """sends raw mouse movements and clicks to the vm
+    def keyboard_scancodes(self, scancode=[]):
+        """sends scancodes to the vm
+
+        avoid this method, as result tends to be unreliable
+
+        Usefull scancodes might be:
+             1 - escape
+            14 - backspace
+            28 - enter
+            224, 91 - super/windows
         """
-        pass
+        for s in scancode:
+            self.session.console.keyboard.put_scancode(s)
+            self.log.add_keyboard("scancode: "+s)
+
+    @check_running
+    def mouse_input(self, x, y, lmb=1, mmb=0, rmb=0, release=True):
+        """sends raw mouse movements and clicks to the vm
+
+        avoid this method, as result tends to be unreliable
+
+        Arguments:
+            x - absolute x-Coordinate starting form the left
+            y - absolute y-Coordinate starting form the top
+            lmb - state of the left mouse button, 1 pressed, 0 unpressed
+            mmb - state of the middle mouse button, 1 pressed, 0 unpressed
+            rmb - state of the right mouse button, 1 pressed, 0 unpressed
+            release - releases the mousebutton, only triggering one click
+        """
+
+        buttonstate = lmb + (2 * rmb) + (4 * mmb)
+
+        session.console.mouse.put_mouse_event_absolute(x,y,0,0,buttonstate)
+        if release:
+            session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
+
+        self.log.add_mouse(x, y, lmb, mmb, rmb)
+
 
     @check_running
     def add_to_nat_network(self, network_name="test_net", adapter=0):
@@ -485,6 +529,7 @@ class Vbox():
         self.network.enabled = True
         self.session.machine.save_settings()
 
+
     @check_running
     def get_ip(self, adapter=0):
         """returns the IPv4 address of the given adapter
@@ -493,6 +538,7 @@ class Vbox():
         """
         return vbox.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
             +adapter+"/V4/IP")
+
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
@@ -555,8 +601,28 @@ class osLinux():
         pass
 
 
+    def download_file(self, url, destination):
+
+        self.run_shell_cmd("wget -O "+destination+" "+url)
+
+
+    def serve_directory(self, directory="~", port=8080):
+        """creates a simple webserver, serving a directory on a given port
+
+        uses python SimpleHTTPServer, since it is installed by default and acts
+        as a propper webserver, unlike netcat.
+
+        Arguments:
+            port - needs to be over 1000, default is 8080
+            directory - a directory to be served, including subdirectories, 
+                default is ~
+        """
+        self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "+port)
+
+
     def open_browser(self, url="www.google.com", method="shell"):
         """Opens a firefox browser with the given url
+
         Arguments:
             method - decide how to run the browser, currently "direct" and 
                 "shell" are available 
@@ -614,34 +680,48 @@ class osWindows():
 
 
     def copy_file(self, source, destination):
-        
+        """copy a file on the guest, using the windows cmd copy command
+        """
         self.run_shell_cmd(command="copy "+source+" "+destination, cmd=True)
 
 
     def move_file(self, source, destination):
-        
+        """move a file on the guest, using the windows move copy command
+        """
         self.run_shell_cmd(command="move "+source+" "+destination, cmd=True)
 
 
     def create_user(self, username, password):
         
         stdin = """$objOu = [ADSI]"WinNT://$computer"
-                $objUser = $objOU.Create("User", {0})
-                $objUser.setpassword({1})
-                $objUser.SetInfo()
+        $objUser = $objOU.Create("User", {0})
+        $objUser.setpassword({1})
+        $objUser.SetInfo()
 
-                """.format(username, password)
+        """.format(username, password)
 
         self.vb.run_process(command=self.term, stdin=stdin)
+
+
+    def download_file(self, url, destination):
+
+        stdin = '''$source = "{0}"
+        $destination = "{1}"
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($source, $destination)
+
+        '''.format(url,destination)
+
+        self.vb.run_process(=self.term, stdin=stdin)
 
 
     def open_browser(self, url="www.google.com"):
 
         stdin = '''$ie = new­object ­com "InternetExplorer.Application"
-                $ie.navigate("{0}")
-                $ie.visible = $true
+        $ie.navigate("{0}")
+        $ie.visible = $true
 
-                '''.format(url)
+        '''.format(url)
 
         self.vb.run_process(command=self.term, stdin=stdin)
 
