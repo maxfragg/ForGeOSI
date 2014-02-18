@@ -420,7 +420,7 @@ class Vbox():
         if wait:
             process, stdout, stderr = self.guestsession.execute(command=command, 
             arguments=arguments, stdin=stdin, environment=environment, 
-            timeout=timeout)
+            timeout_ms=timeout)
 
         else:
             flags=[virtualbox.library.ProcessCreateFlag.wait_for_process_start_only,
