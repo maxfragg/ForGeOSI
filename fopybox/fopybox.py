@@ -10,6 +10,10 @@ import time
 #needs python-decorator, needed for signature preserving decorators
 from decorator import decorator 
 
+usertoken=""
+"""this token is added to user-strings to separate users from each other, use 
+empty string for no separation
+"""
 
 class VboxInfo():
     """Helper class, not changing machine state
@@ -48,6 +52,8 @@ class VboxConfig():
         
         This is needed to enabled networking between different VM instances
         """
+
+        network_name = network_name + usertoken
 
         try:
             self.net = self.vb.find_nat_network_by_name(network_name)
@@ -187,6 +193,8 @@ class Vbox():
 
         if wait:
             self.progress.wait_for_completion()
+            while (self.vm.state != 5):
+                time.sleep(5)
         else:
             return self.progress
 
@@ -420,7 +428,7 @@ class Vbox():
 
             process = self.guestsession.process_create(command=command, 
                 arguments=arguments, environment=environment, flags=flags,
-                timeout = timeout)
+                timeout_ms = timeout)
 
             stdout = ""
             stderr = ""
@@ -520,6 +528,8 @@ class Vbox():
         VboxConfig.get_nat_network(). Using adapter 0 will reconfigure the 
         default network adapter, use numbers 2-7 for additional adapters.
         """
+
+        network_name = network_name + usertoken
 
         self.network = self.session.machine.get_network_adapter(adapter)
         self.network.nat_network = network_name
@@ -632,7 +642,7 @@ class osLinux():
             self.vb.run_process(command="/usr/bin/firefox", 
                 arguments=["-new-tab",url], environment=self.env, wait=False)
         elif method == "shell":
-            self.run_shell_cmd(command=command+"-new-tab"+url)
+            self.run_shell_cmd(command="/usr/bin/firefox -new-tab"+url)
 
 
     def uninstall_program(self, program):
@@ -712,7 +722,7 @@ class osWindows():
 
         '''.format(url,destination)
 
-        self.vb.run_process(=self.term, stdin=stdin)
+        self.vb.run_process(command=self.term, stdin=stdin)
 
 
     def open_browser(self, url="www.google.com"):

@@ -237,7 +237,7 @@ class Logger():
         self.log.append(LogRawKeyboard(*args))
 
     def add_mouse(self, *args):
-        self.log.append(LogRawKeyboard(*args))
+        self.log.append(LogMouse(*args))
 
     def get_log(self):
         for l in self.log:
@@ -254,6 +254,6 @@ class Logger():
             path = self.log.pop().cleanup()
             while path is False:
                 path = self.log.pop().cleanup()
-            return return path
+            return path
 
         
