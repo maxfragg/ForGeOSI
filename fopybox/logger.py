@@ -241,7 +241,7 @@ class Logger():
 
     def get_log(self):
         for l in self.log:
-            print etree.tostring(l.getXML(), pretty_print=True)
+            print etree.tostring(l.to_XML(), pretty_print=True)
 
     def cleanup(self):
         """Gets one path, to clean up at a time

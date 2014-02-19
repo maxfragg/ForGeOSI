@@ -97,8 +97,8 @@ def check_guestsession(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
     """
     if not args[0].guestsession:
-        print "creating guestsession"
-        args[0].guestsession = args[0].create_guest_session()
+        print "needs guestsession"
+        return
     func(*args, **kwargs)   
 
 
@@ -184,6 +184,8 @@ class Vbox():
             type - "headless" means, the machine runs without any gui, the only 
                 sensible way on a remote server. This parameter is changable to 
                 "gui" for debugging only
+            wait - waits till the machine is initialised, it will not have 
+                finished booting yet. 
         """
 
         self.unlock()
@@ -458,7 +460,7 @@ class Vbox():
         This leaves no plausible trace for fakeing, so use with care
         """
 
-        progress = self.guestsession.copy_to(source, destination, [])
+        progress = self.guestsession.copy_to_vm(source, destination, [])
 
         self.log.add_file(source=source, destination=dest)
 
@@ -547,8 +549,9 @@ class Vbox():
 
         Needs guest additions installed
         """
-        return vbox.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
-            +adapter+"/V4/IP")
+
+        return self.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
+            +str(adapter)+"/V4/IP")
 
 
     @check_stopped
@@ -590,11 +593,11 @@ class osLinux():
         """runs a command inside the default shell of the user
         """
         if close_shell:
-            command = command + "\n  exit\n"
+            cmd = command + "\n  exit\n"
         else:
-            command = command + "\n"
+            cmd = command + "\n"
 
-        self.vb.run_process(command=self.term, stdin=command, 
+        self.vb.run_process(command=self.term, stdin=cmd, 
             environment=self.env, wait=True)
 
 
@@ -628,7 +631,8 @@ class osLinux():
             directory - a directory to be served, including subdirectories, 
                 default is ~
         """
-        self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "+port)
+        self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
+            +str(port))
 
 
     def open_browser(self, url="www.google.com", method="shell"):
@@ -759,4 +763,5 @@ class osWindows():
         installed
         """
 
-        self.uninstall_program("Oracle VM VirtualBox Guest Additions"+version)
+        self.uninstall_program("Oracle VM VirtualBox Guest Additions"
+            +str(version)
