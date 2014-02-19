@@ -411,7 +411,7 @@ class Vbox():
         This method requires the VirtualBox Guest Additions to be installed.
 
         Arguments:
-            stdin - only used, if wait=True, this is send to the stdin of the 
+            stdin - this is send to the stdin of the 
                 process after its creation
             timeout - This is a timeout in miliseconds, which determines, when 
                 the process will be killed, 0 will disable the timeout
@@ -420,9 +420,11 @@ class Vbox():
                 is still running
         """
 
-        if wait:
+        #workaround for broken stdin in execute, remove "and not stdin" 
+        #if it gets fixed
+        if wait and not stdin:
             process, stdout, stderr = self.guestsession.execute(command=command, 
-            arguments=arguments, stdin=stdin, environment=environment, 
+            arguments=arguments, stdin=stdin environment=environment, 
             timeout_ms=timeout)
 
         else:
@@ -432,6 +434,10 @@ class Vbox():
             process = self.guestsession.process_create(command=command, 
                 arguments=arguments, environment=environment, flags=flags,
                 timeout_ms = timeout)
+
+            if stdin:
+                time.sleep(5)
+                self.keyboard_input(stdin)
 
             stdout = ""
             stderr = ""
