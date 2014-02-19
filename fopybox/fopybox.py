@@ -404,17 +404,25 @@ class Vbox():
 
     @check_running
     @check_guestsession
-    def run_process(self, command, arguments=[], stdin='', environment=[],
-             timeout=0, wait=True):
+    def run_process(self, command, arguments=[], stdin='', keyinput='',
+            environment=[], timeout=0, wait_time=10 wait=True):
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
 
         Arguments:
+            command - full path to the binary, that should be executed
+            arguments - arguments passed to the binary, passed as an array of 
+                single arguments
             stdin - this is send to the stdin of the 
                 process after its creation
+            keyinput - this is send to the process as keyboard input
+            environment - user environment for the program, important on linux, 
+                because otherwise user processes have the environment of root
             timeout - This is a timeout in miliseconds, which determines, when 
                 the process will be killed, 0 will disable the timeout
+            wait_time - time to wait, until input is send via keyboard, only 
+                relevant in combination with wait=False/keyinput
             wait - selects if the process should be created syncronous with input 
                 or if this function will return, while the porcess inside the VM
                 is still running
@@ -422,7 +430,7 @@ class Vbox():
 
         #workaround for broken stdin in execute, remove "and not stdin" 
         #if it gets fixed
-        if wait and not stdin:
+        if wait and not keyinput:
             process, stdout, stderr = self.guestsession.execute(command=command, 
             arguments=arguments, stdin=stdin environment=environment, 
             timeout_ms=timeout)
@@ -435,9 +443,9 @@ class Vbox():
                 arguments=arguments, environment=environment, flags=flags,
                 timeout_ms = timeout)
 
-            if stdin:
-                time.sleep(5)
-                self.keyboard_input(stdin)
+            if keyinput:
+                time.sleep(wait_time)
+                self.keyboard_input(keyinput)
 
             stdout = ""
             stderr = ""
@@ -585,7 +593,9 @@ class osLinux():
     """Linux specific operations 
 
     Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM
+    features, that depend on the opertation system, running in the VM.
+    some functions require additional software:
+        xdotool
     """
 
     def __init__(self, vb, term="/usr/bin/xterm", env=[]):
@@ -593,6 +603,7 @@ class osLinux():
         self.term = term
         self.env = ["DISPLAY=:0", "USER="+vb.username, 
             "HOME=/home/"+vb.username] + env
+        self.xdt = "/usr/bin/xdotool"
 
 
     def run_shell_cmd(self, command, close_shell=True):
@@ -603,9 +614,45 @@ class osLinux():
         else:
             cmd = command + "\n"
 
-        self.vb.run_process(command=self.term, stdin=cmd, 
+        self.vb.run_process(command=self.term, keyinput=cmd, 
             environment=self.env, wait=True)
 
+
+#xdotool key --windowid "$(xdotool --search --class Chrome | head -n 1)" F5
+
+    def keyboard_input(self, keyinput, window_class='', pid=0):
+        """Sends keyboard input to a running gui process.
+
+        Arguments
+            input - String of characters to be send to the process
+            window_class - X-property, usually matching the program name, which 
+                can be used to find program. Will be ignored if empty
+            pid - process id, unique idenifier per process, but not per window, 
+                is not allways part of the X-properties. Will be ignored if Zero
+        """
+
+        # magic is needed, since we only want to send a limited number of 
+        # keystrokes at once! 
+        l = list(keyinput)
+        l = ["space" if x==" " else x for x in l]
+        l = ["return" if x=="\n" else x for x in l]
+        n = 10 #choose a sane number here, how many keys to send at once
+        l2= [l[i:i+n] for i in range(0, len(l), n)]
+
+
+
+
+    def keyboard_specialkey(self, key, window_class='', pid=0):
+        """Sends a special key or key combination to a running gui process.
+
+        Arguments
+            key - X name of the key to be send as a string, names like "alt", 
+                "ctrl", combinations like "ctl+alt+backspace" also work
+            window_class - X-property, usually matching the program name, which 
+                can be used to find program. Will be ignored if empty
+            pid - process id, unique idenifier per process, but not per window, 
+                is not allways part of the X-properties. Will be ignored if Zero
+        """
 
     def copy_file(self, source, destination):
         
@@ -660,8 +707,8 @@ class osLinux():
         """remove a program from the guest system with apt-get
 
         """
-        stdin="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
-        self.vb.run_process(command=self.term, stdin=stdin, environment=self.env,)
+        cmd="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
+        self.run_shell_cmd(command=cmd)
 
 
     def uninstall_guest_additions():
