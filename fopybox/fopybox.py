@@ -5,6 +5,8 @@ import virtualbox #pyvbox
 import os
 import subprocess
 import logger #local import
+import oslinux #local import
+import oswindows #local import
 import shutil
 import time
 #needs python-decorator, needed for signature preserving decorators
@@ -113,7 +115,7 @@ class Vbox():
     
     def __init__(self, basename="ubuntu-lts-base",
             clonename="testvm", mode="clone", linkedName="Forensig20Linked",
-            osType="Linux26", username="default", password="12345", wait=True):
+            osType="Linux26", wait=True):
         """Initialises a virtualbox instance
 
         The new instance of this class can either reuse an existing virtual 
@@ -160,15 +162,8 @@ class Vbox():
 
         self.session = self.vm.create_session()
         self.guestsession = False
-        self.username = username
-        self.password = password
 
-        #use vm property to find systemtype
-        if osType in ["Linux26","Linux26_64","Ubuntu","Ubuntu_64"]:
-            self.os = osLinux(self)
-        elif osType in  ["Windows7","Windows7_64","Windows8","Windows8_64"
-                ,"Windows81","Windows81_64"]:
-            self.os = osWindows(self)
+        self.osType = osType
 
         self.running = False
 
@@ -360,14 +355,31 @@ class Vbox():
 
 
     @check_running
-    def create_guest_session(self):
+    def create_guest_session(self, username="default", password="12345"):
         """creates a guest session for issuing commands to the guest system
 
         While the VirtualBox API would support up to 256 simultanious guest 
-        sessions, here only one simultanious guestsession is supported
+        sessions, here only one simultanious guestsession is supported, if more 
+        than one guestsession are needed, they need to be manged by hand.
+
+        Arguments
+            username - username for the vm user, the session should belong to
+            password - password for the vm user, the session should belong to
         """
 
+        self.username = username
+        self.password = password
+
         self.guestsession = self.session.console.guest.create_session(self.username,self.password)
+
+        #use vm property to find systemtype
+        #we create the self.os at this point, because it needs a running guest
+        #session anyway, this prevents if form being used befor this exists
+        if self.osType in ["Linux26","Linux26_64","Ubuntu","Ubuntu_64"]:
+            self.os = oslinux.osLinux(self)
+        elif self.osType in  ["Windows7","Windows7_64","Windows8","Windows8_64"
+                ,"Windows81","Windows81_64"]:
+            self.os = oswindows.osWindows(self)
 
 
     @check_running
@@ -598,266 +610,3 @@ class Vbox():
                 hdd.delete_storage()
 
 
-class osLinux():
-    """Linux specific operations 
-
-    Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM.
-    some functions require additional software:
-        xdotool
-    """
-
-    def __init__(self, vb, term="/usr/bin/xterm", env=[]):
-        self.vb = vb
-        self.term = term
-        self.env = ["DISPLAY=:0", "USER="+vb.username, 
-            "HOME=/home/"+vb.username] + env
-        self.xdt = "/usr/bin/xdotool"
-
-
-    def run_shell_cmd(self, command, close_shell=True):
-        """runs a command inside the default shell of the user
-        """
-        if close_shell:
-            cmd = command + "\n  exit\n"
-        else:
-            cmd = command + "\n"
-
-        self.vb.run_process(command=self.term, keyinput=cmd, 
-            environment=self.env, wait=True)
-
-
-    def keyboard_input(self, keyinput, window_class='', name='', pid=0):
-        """Sends keyboard input to a running gui process.
-
-        Arguments
-            input - String of characters to be send to the process
-            window_class - X-property, usually matching the program name, which 
-                can be used to find program. Will be ignored if empty
-            name - X-property, might work better than window_class for some 
-                usecases
-            pid - process id, unique idenifier per process, but not per window, 
-                is not allways part of the X-properties. Will be ignored if Zero
-        """
-
-        if window_class or name or pid:
-            args = ["search"]
-
-        if window_class:
-            args = args + ["--class", window_class]
-
-        if name:
-            args = args + ["--name", name]
-
-        if pid:
-            args = args + ["--pid", str(pid)]
-
-        #type will simulate typing and interpret space '\n'
-        args = args + ["type"] 
-        
-        n = 30 #choose a sane number here, how many keys to send at once
-
-        keyinput_split = [keyinput[i:i+n] for i in range(0, len(keyinput), n)]
-
-        for part in keyinput_split 
-
-            self.vb.run_process(command=self.xdt,arguments=args+[part], 
-                environment=self.env)
-
-
-    def keyboard_specialkey(self, key, window_class='', name='', pid=0):
-        """Sends a special key or key combination to a running gui process.
-
-        Arguments
-            key - X name of the key to be send as a string, names like "alt", 
-                "ctrl", combinations like "ctl+alt+backspace" also work
-            window_class - X-property, usually matching the program name, which 
-                can be used to find program. Will be ignored if empty
-            name - X-property, might work better than window_class for some 
-                usecases
-            pid - process id, unique idenifier per process, but not per window, 
-                is not allways part of the X-properties. Will be ignored if Zero
-        """
-
-        if window_class or pid:
-            args = ["search"]
-
-        if window_class:
-            args = args + ["--class", window_class]
-
-        if name:
-            args = args + ["--name", name]
-
-        if pid:
-            args = args + ["--pid", str(pid)]
-
-        args = args + ["key"]
-
-        self.vb.run_process(command=self.xdt,arguments=args+key,
-                environment=self.env)
-
-
-    def copy_file(self, source, destination):
-        
-        self.run_shell_cmd("cp "+source+" "+destination)
-
-
-    def move_file(self, source, destination):
-        
-        self.run_shell_cmd("mv "+source+" "+destination)
-
-
-    def create_user(self, username, password):
-        pass
-
-
-    def download_file(self, url, destination):
-
-        self.run_shell_cmd("wget -O "+destination+" "+url)
-
-
-    def serve_directory(self, directory="~", port=8080):
-        """creates a simple webserver, serving a directory on a given port
-
-        uses python SimpleHTTPServer, since it is installed by default and acts
-        as a propper webserver, unlike netcat.
-
-        Arguments:
-            port - needs to be over 1000, default is 8080
-            directory - a directory to be served, including subdirectories, 
-                default is ~
-        """
-        self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-            +str(port))
-
-
-    def open_browser(self, url="www.google.com", method="shell"):
-        """Opens a firefox browser with the given url
-
-        Arguments:
-            method - decide how to run the browser, currently "direct" and 
-                "shell" are available 
-        """
-
-        if method == "direct":
-            self.vb.run_process(command="/usr/bin/firefox", 
-                arguments=["-new-tab",url], environment=self.env, wait=False)
-        elif method == "shell":
-            self.run_shell_cmd(command="/usr/bin/firefox -new-tab"+url)
-
-
-    def uninstall_program(self, program):
-        """remove a program from the guest system with apt-get
-
-        """
-        cmd="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
-        self.run_shell_cmd(command=cmd)
-
-
-    def uninstall_guest_additions():
-        """remove the guest additions
-
-        Warning: This can not be undone, since remote running of software is 
-        very limited without guest additions!
-        """
-
-        self.uninstall_program("virtualbox-guest-*")
-
-
-class osWindows():
-    """Windows specific operations
-
-    Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM.
-    For this class to work, @term needs to be the path to a windows powershell!
-    Expects the operating system to be a MS Windows 7 or newer 
-    """
-
-    def __init__(self,vb,
-            term="%%SystemRoot%%\\system32\\WindowsPowerShell\\v.1.0\powershell.exe"):
-        self.vb = vb
-        self.term = term
-        self.cmd ="%%SystemRoot%%\\system32\\cmd.exe" 
-
-
-    def run_shell_cmd(self, command, cmd=True):
-        """runs a command inside the default shell of the user or in the legacy
-        cmd.exe
-        """
-        if cmd:
-            return self.vb.run_process(command=self.cmd, arguments=['/C', command])
-        else:
-            return self.vb.run_process(command=self.term, stdin=command+"\n")
-
-
-    def copy_file(self, source, destination):
-        """copy a file on the guest, using the windows cmd copy command
-        """
-        self.run_shell_cmd(command="copy "+source+" "+destination, cmd=True)
-
-
-    def move_file(self, source, destination):
-        """move a file on the guest, using the windows move copy command
-        """
-        self.run_shell_cmd(command="move "+source+" "+destination, cmd=True)
-
-
-    def create_user(self, username, password):
-        
-        stdin = """$objOu = [ADSI]"WinNT://$computer"
-        $objUser = $objOU.Create("User", {0})
-        $objUser.setpassword({1})
-        $objUser.SetInfo()
-
-        """.format(username, password)
-
-        self.vb.run_process(command=self.term, stdin=stdin)
-
-
-    def download_file(self, url, destination):
-
-        stdin = '''$source = "{0}"
-        $destination = "{1}"
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($source, $destination)
-
-        '''.format(url,destination)
-
-        self.vb.run_process(command=self.term, stdin=stdin)
-
-
-    def open_browser(self, url="www.google.com"):
-
-        stdin = '''$ie = new­object ­com "InternetExplorer.Application"
-        $ie.navigate("{0}")
-        $ie.visible = $true
-
-        '''.format(url)
-
-        self.vb.run_process(command=self.term, stdin=stdin)
-
-
-    def uninstall_program(self, program):
-        """remove a program from the guest system
-
-        This only works for progams using msi-based installers
-        """
-        stdin = """$app = Get-WmiObject -Class Win32_Product `
-                     -Filter "Name = '{0}'"
-                $app.Uninstall()
-
-                """.format(program)
-
-        self.vb.run_process(command=self.term, stdin=stdin)
-
-
-    def uninstall_guest_additions(self, version="4.3.6"):
-        """remove the guest additions
-
-        Warning: This can not be undone, since remote running of software is 
-        very limited without guest additions! You need to know the exact version
-        installed
-        """
-
-        self.uninstall_program("Oracle VM VirtualBox Guest Additions"
-            +str(version)
