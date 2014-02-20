@@ -368,7 +368,7 @@ class Vbox():
         sessions, here only one simultanious guestsession is supported, if more 
         than one guestsession are needed, they need to be manged by hand.
 
-        Arguments
+        Arguments:
             username - username for the vm user, the session should belong to
             password - password for the vm user, the session should belong to
         """
@@ -380,7 +380,7 @@ class Vbox():
 
         #use vm property to find systemtype
         #we create the self.os at this point, because it needs a running guest
-        #session anyway, this prevents if form being used befor this exists
+        #session anyway, this prevents if form being used before this exists
         if self.osType in ["Linux26","Linux26_64","Ubuntu","Ubuntu_64"]:
             self.os = oslinux.osLinux(self)
         elif self.osType in  ["Windows7","Windows7_64","Windows8","Windows8_64"
@@ -392,10 +392,17 @@ class Vbox():
     def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
         """Creates a iso-image based on directory and mounts it to the VM
 
-        If the operating system inside the vm does no automounting, further action
-        will be needed. For Ubuntu and Windows, the files should be accessible without
-        further action
-        Depends on mkisofs form genisoimage, should be installed by default on ubuntu
+        If the operating system inside the vm does no automounting, further 
+        action will be needed. For Ubuntu and Windows, the files should be 
+        accessible without further action.
+        Depends on mkisofs from genisoimage, should be installed by default on 
+        ubuntu hosts
+
+        Arguments
+            folder_path - path to the folder, whichs content should be inside the 
+                image
+            iso_path - path, where the iso image should be created
+            cdlabel - label, which will be shown inside the vm
         """
 
         #basic sanity check
@@ -507,7 +514,7 @@ class Vbox():
     def copy_to_vm(self, source, dest, wait=True):
         """Copy a file form outside into the VM
 
-        This leaves no plausible trace for fakeing, so use with care
+        This leaves no plausible trace for faking, so use with care
         """
 
         progress = self.guestsession.copy_to_vm(source, destination, [])

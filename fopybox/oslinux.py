@@ -34,6 +34,23 @@ class osLinux():
             environment=self.env, wait=True)
 
 
+    def _build_xdotool_args(self, window_class, name, pid):
+    	"""helper to get the arguments for xdotool
+    	"""
+    	args = []
+
+        if window_class or name or pid:
+        	#sync makes it hang, until a window is found with the propery
+            args = ["search --sync"]
+        if window_class:
+            args = args + ["--class", window_class]
+        if name:
+            args = args + ["--name", name]
+        if pid:
+            args = args + ["--pid", str(pid)]
+        return args
+
+
     def keyboard_input(self, keyinput, window_class='', name='', pid=0):
         """Sends keyboard input to a running gui process.
 
@@ -47,22 +64,8 @@ class osLinux():
                 is not allways part of the X-properties. Will be ignored if Zero
         """
 
-        args = []
-
-        if window_class or name or pid:
-            args = ["search"]
-
-        if window_class:
-            args = args + ["--class", window_class]
-
-        if name:
-            args = args + ["--name", name]
-
-        if pid:
-            args = args + ["--pid", str(pid)]
-
         #type will simulate typing and interpret space '\n'
-        args = args + ["type"] 
+        args = _build_xdotool_args(window_class, name, pid) + ["type"] 
         
         n = 30 #choose a sane number here, how many keys to send at once
 
@@ -88,21 +91,8 @@ class osLinux():
                 is not allways part of the X-properties. Will be ignored if Zero
         """
 
-        args = []
-
-        if window_class or pid:
-            args = ["search"]
-
-        if window_class:
-            args = args + ["--class", window_class]
-
-        if name:
-            args = args + ["--name", name]
-
-        if pid:
-            args = args + ["--pid", str(pid)]
-
-        args = args + ["key"]
+        #key uses keynames in oposite to type
+        args = _build_xdotool_args(window_class, name, pid) + ["key"]
 
         self.vb.run_process(command=self.xdt,arguments=args+key,
                 environment=self.env)
@@ -118,8 +108,10 @@ class osLinux():
         self.run_shell_cmd("mv "+source+" "+destination)
 
 
-    def create_user(self, username, password):
-        pass
+    def create_user(self, username, password, rootpassword):
+        
+        self.run_shell_cmd("sudo adduser --group --shell /bin/bash "+username+
+        	"\n"+rootpassword+"\nsudo passwd "+username+"\n"+password+"\n")
 
 
     def download_file(self, url, destination):

@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
+#
+# By Maximimlian Krueger
+# [maximilian.krueger@fau.de]
+#
 
 class osWindows():
     """Windows specific operations
