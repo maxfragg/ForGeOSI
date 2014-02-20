@@ -32,6 +32,7 @@ def toXML(classElement, **kwargs):
             node.append(xml)
     return node
 
+
 class LogCopiedFile():
     """Stores data of a single file, copied to the VM
 
@@ -48,22 +49,27 @@ class LogCopiedFile():
         self.timeRate = timeRate
         self.upTime = upTime
 
+
     def get_file_size(self):
         filesize = os.path.getsize(self.tmp)
         return filesize
+
 
     def copy_to_temp(self):
         tmp = '/tmp/%s.forensig20' % str(uuid.uuid4())
         shutil.copy(self.source, tmp)
         return tmp
 
+
     def calc_md5sum(self):
         md5 = hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
         return md5
 
+
     def calc_sha256sum(self):
         sha256 = hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
         return sha256
+
 
     def get_entry(self):
         return {'source': self.source,
@@ -72,32 +78,43 @@ class LogCopiedFile():
             'filesize': self.filesize, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
+
     def cleanup(self):
         return self.tmp
 
+
     def to_xml(self):
         return toXML(self, nodeName="copiedFile", ignore=['time'])
+
 
 class LogCdMount():
     """Stores data about a cd mounted to the VM
 
     """
-    def __init__(self, path, timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, path, delete=False, timeoffset=0, timeRate=0, upTime=0):
         self.path = path
+        self.delete = delete
         self.realtime = time.time()
         self.time = time.time() + timeoffset
         self.timeRate = timeRate
         self.upTime = upTime
 
+
     def get_entry(self):
         return {'path': self.path, 'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
+
     def cleanup(self):
-        return self.path
+        if self.delete:
+            return self.path
+        else:
+            return False
+
 
     def to_xml(self):
         return toXML(self, nodeName="cd", ignore=['time'])
+
 
 class LogProcess():
     """Stores data of a single process, running in the VM
@@ -116,6 +133,7 @@ class LogProcess():
         self.timeRate = timeRate
         self.upTime = upTime
 
+
     def get_entry(self):
         return {'process': self.process, 'arguments': self.arguments,
             'stdin': self.stdin, 'key_input': self.key_input, 
@@ -123,8 +141,10 @@ class LogProcess():
             'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
+
     def cleanup(self):
         return False
+
 
     def to_xml(self):
         return toXML(self, nodeName="process", ignore=['time'])
@@ -139,12 +159,15 @@ class LogRawKeyboard():
         self.timeRate = timeRate
         self.upTime = upTime
 
+
     def get_entry(self):
         return {'keyboard input': self.key_input, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
+
     def cleanup(self):
         return False
+
 
     def to_xml(self):
         return toXML(self, nodeName="keyboard input", ignore=['time'])
@@ -164,14 +187,17 @@ class LogMouse():
         self.timeRate = timeRate
         self.upTime = upTime
 
+
     def get_entry(self):
         return {'x': self.x, 'y': self.y, 'left mouse button': self.lmb,
         'middle mouse button': self.mmb, 'right mouse button': self.rmb,
         'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate,
         'upTime': self.upTime}
 
+
     def cleanup(self):
         return False
+
 
     def to_xml(self):
         return toXML(self, nodeName="mouse input", ignore=['time'])
@@ -245,7 +271,7 @@ class Logger():
 
     def get_log(self):
         for l in self.log:
-            print etree.tostring(l.to_XML(), pretty_print=True)
+            print etree.tostring(l.to_xml(), pretty_print=True)
 
     def cleanup(self):
         """Gets one path, to clean up at a time

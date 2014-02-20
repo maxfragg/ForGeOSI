@@ -229,7 +229,7 @@ class Vbox():
                 self.running = False
                 self.guestsession = False
                 return self.progress
-           
+        
 
 
     def lock(self):
@@ -273,6 +273,7 @@ class Vbox():
 
         if wait:
             progress.wait_for_completion()
+            clone_hdd.close()
             self.unlock()
         else:
             return progress
@@ -285,7 +286,7 @@ class Vbox():
             path - path, where the png image should be created
         """
 
-        h, w, d, x, y = self.session.console.display.get_screen_resolution(0)
+        h, w, _, _, _ = self.session.console.display.get_screen_resolution(0)
 
         png = self.session.console.display.take_screen_shot_png_to_array(0, h, w)
 
@@ -401,14 +402,23 @@ class Vbox():
         if os.path.exists(iso_path) == False:
             return
 
-        args = "-J -l -R -V"+cdlabel+"-iso-level 4 -o"+iso_path+" "+folder_path
+        args = ["-J", "-l", "-R", "-V", cdlabel, "-iso-level", "4" ,"-o ",
+            folder_path, iso_path]
 
-        subprocess.call(["mkisofs", args])
+        subprocess.call(["mkisofs"]+args)
 
         self.session.machine.mount_medium("IDE",0,0,iso_path,False)
-        self.iso = iso_path
 
-        self.log.add_cd(iso_path)
+        self.log.add_cd(iso_path,True)
+
+
+    @check_running
+    def mount_cd(self,path):
+        """mounts an iso image to the VM
+        """
+
+        self.session.machine.mount_medium("IDE",0,0,path,False)
+        self.log.add_cd(path)
 
 
     @check_running
