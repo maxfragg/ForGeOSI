@@ -47,6 +47,8 @@ class osLinux():
                 is not allways part of the X-properties. Will be ignored if Zero
         """
 
+        args = []
+
         if window_class or name or pid:
             args = ["search"]
 
@@ -85,6 +87,8 @@ class osLinux():
             pid - process id, unique idenifier per process, but not per window, 
                 is not allways part of the X-properties. Will be ignored if Zero
         """
+
+        args = []
 
         if window_class or pid:
             args = ["search"]

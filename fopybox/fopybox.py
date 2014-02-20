@@ -263,11 +263,13 @@ class Vbox():
         is usually the boot device, in the default config of virtualbox
         """
 
+        self.lock()
+
         clone_hdd = self.vb.create_hard_disk("",path)
         cur_hdd = self.session.machine.get_medium(controller,port,disk)
         #TODO: support vmdk_raw_disk as well?
-        progress = clone_hdd.copy_to(clone_hdd,
-            virtualbox.library.MediumVariant.standard,None)
+        progress = cur_hdd.clone_to_base(clone_hdd,
+            [virtualbox.library.MediumVariant.standard])
 
         if wait:
             progress.wait_for_completion()
