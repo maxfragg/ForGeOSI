@@ -65,7 +65,7 @@ class osWindows():
 
     def open_browser(self, url="www.google.com"):
 
-        stdin = '''$ie = new­object ­com "InternetExplorer.Application"
+        stdin = '''$ie = new?object ?com "InternetExplorer.Application"
         $ie.navigate("{0}")
         $ie.visible = $true
 
@@ -97,4 +97,4 @@ class osWindows():
         """
 
         self.uninstall_program("Oracle VM VirtualBox Guest Additions"
-            +str(version)
+            +str(version))

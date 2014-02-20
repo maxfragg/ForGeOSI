@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf8 -*-
 
 import virtualbox #pyvbox
 import os
@@ -447,7 +447,7 @@ class Vbox():
 
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command, 
-            arguments=arguments, stdin=stdin environment=environment, 
+            arguments=arguments, stdin=stdin, environment=environment, 
             timeout_ms=timeout)
 
         else:

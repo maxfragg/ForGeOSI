@@ -62,7 +62,7 @@ class osLinux():
 
         keyinput_split = [keyinput[i:i+n] for i in range(0, len(keyinput), n)]
 
-        for part in keyinput_split 
+        for part in keyinput_split:
 
             self.vb.run_process(command=self.xdt,arguments=args+[part], 
                 environment=self.env)
