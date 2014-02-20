@@ -98,11 +98,12 @@ class LogProcess():
     """Stores data of a single process, running in the VM
 
     """
-    def __init__(self, process, arguments, stdin='', stdout='', stderr='', 
-            timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, process, arguments, stdin='', key_input='', stdout='',
+            stderr='', timeoffset=0, timeRate=0, upTime=0):
         self.process = process
         self.arguments = arguments
         self.stdin = stdin
+        self.key_input = key_input
         self.stdout = stdout
         self.stderr = stderr
         self.realtime = time.time()
@@ -112,7 +113,8 @@ class LogProcess():
 
     def get_entry(self):
         return {'process': self.process, 'arguments': self.arguments,
-            'stdin': self.stdin, 'stdout': self.stdout, 'stderr': self.stderr, 
+            'stdin': self.stdin, 'key_input': self.key_input, 
+            'stdout': self.stdout, 'stderr': self.stderr, 
             'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
