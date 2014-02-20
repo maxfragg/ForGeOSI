@@ -1,5 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
+#
+# By Maximimlian Krueger
+# [maximilian.krueger@fau.de]
+#
+
 
 import time
 import shutil
@@ -174,17 +179,14 @@ class LogMouse():
 
 class LogVM():
     """saves general properties of one VM"""
-    def __init__(self, vmname, basename, osType, username, password):  
+    def __init__(self, vmname, basename, osType):  
         self.vmname = vmname
         self.basename = basename
         self.osType = osType
-        self.username = username
-        self.password = password
 
     def get_entry(self):
         return {'vmname': self.vmname, 'basename': self.basename, 
-            'osType': self.osType, 'username': self.username, 
-            'password': password}
+            'osType': self.osType}
 
     def cleanup(self):
         return False

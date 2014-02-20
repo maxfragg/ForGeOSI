@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
+#
+# By Maximimlian Krueger
+# [maximilian.krueger@fau.de]
+#
 
 import virtualbox #pyvbox
 import os
@@ -115,7 +119,7 @@ class Vbox():
     
     def __init__(self, basename="ubuntu-lts-base",
             clonename="testvm", mode="clone", linkedName="Forensig20Linked",
-            osType="Linux26", wait=True):
+            wait=True):
         """Initialises a virtualbox instance
 
         The new instance of this class can either reuse an existing virtual 
@@ -123,7 +127,6 @@ class Vbox():
         of sessions and machines are not exposed to the user
 
         Arguments:
-            osType - must be in VboxInfo.list_ostypes()
             basename - must be in VboxInfo.list_vms()
             mode - must be "use" or "clone"
             wait - Setting wait to False enables async actions, but might break 
@@ -133,10 +136,11 @@ class Vbox():
         self.vb = virtualbox.VirtualBox()
 
         if mode=="clone":
-            self.vm = self.vb.create_machine("",clonename,[], osType,"")
 
             _orig = self.vb.find_machine(basename)
             _orig_session = _orig.create_session()
+
+            self.vm = self.vb.create_machine("",clonename,[], _orig.os_type_id,"")
 
             try:
                 _snap = _orig.find_snapshot(linkedName)
@@ -159,16 +163,15 @@ class Vbox():
             self.is_clone=True
         elif mode=="use":
             self.vm = self.vb.find_machine(basename)
+            self.osType = self.vm.os_type_id
 
         self.session = self.vm.create_session()
         self.guestsession = False
 
-        self.osType = osType
-
         self.running = False
 
         self.log = logger.Logger()
-        self.log.add_vm(clonename, basename, osType, username, password)
+        self.log.add_vm(clonename, basename, osType)
 
 
     @check_stopped  
