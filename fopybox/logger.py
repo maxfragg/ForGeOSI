@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 #
-# By Maximimlian Krueger
+# By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
 
@@ -14,6 +14,8 @@ from lxml import etree
 
 
 def toXML(classElement, **kwargs):
+    """creates a xml representation of a given object
+    """
     if kwargs.has_key('nodeName'):
         nodeName = kwargs['nodeName']
     else:
@@ -35,7 +37,6 @@ def toXML(classElement, **kwargs):
 
 class LogCopiedFile():
     """Stores data of a single file, copied to the VM
-
     """
     def __init__(self, source, destination, timeoffset=0, timeRate=100, upTime=0):
         self.source = source
@@ -89,7 +90,6 @@ class LogCopiedFile():
 
 class LogCdMount():
     """Stores data about a cd mounted to the VM
-
     """
     def __init__(self, path, delete=False, timeoffset=0, timeRate=0, upTime=0):
         self.path = path
@@ -118,11 +118,11 @@ class LogCdMount():
 
 class LogProcess():
     """Stores data of a single process, running in the VM
-
     """
-    def __init__(self, process, arguments, stdin='', key_input='', stdout='',
+    def __init__(self, process, path, arguments, stdin='', key_input='', stdout='',
             stderr='', timeoffset=0, timeRate=0, upTime=0):
         self.process = process
+        self.path = path
         self.arguments = arguments
         self.stdin = stdin
         self.key_input = key_input
@@ -135,10 +135,10 @@ class LogProcess():
 
 
     def get_entry(self):
-        return {'process': self.process, 'arguments': self.arguments,
-            'stdin': self.stdin, 'key_input': self.key_input, 
-            'stdout': self.stdout, 'stderr': self.stderr, 
-            'realtime': self.realtime, 'time': self.time, 
+        return {'process': self.process, 'path': self.path, 
+            'arguments': self.arguments, 'stdin': self.stdin,
+            'key_input': self.key_input, 'stdout': self.stdout, 
+            'stderr': self.stderr, 'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
 
 
@@ -170,7 +170,7 @@ class LogRawKeyboard():
 
 
     def to_xml(self):
-        return toXML(self, nodeName="keyboard input", ignore=['time'])
+        return toXML(self, nodeName="keyboard_input", ignore=['time'])
 
 
 class LogMouse():
@@ -200,7 +200,7 @@ class LogMouse():
 
 
     def to_xml(self):
-        return toXML(self, nodeName="mouse input", ignore=['time'])
+        return toXML(self, nodeName="mouse_input", ignore=['time'])
 
 
 class LogVM():
@@ -218,7 +218,7 @@ class LogVM():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="VM Properties")
+        return toXML(self, nodeName="vm")
 
 
 class LogInterface():
@@ -273,10 +273,15 @@ class Logger():
         for l in self.log:
             print etree.tostring(l.to_xml(), pretty_print=True)
 
+    def write_log(self, path):
+        f = open(path, 'wb')
+        for l in self.log:
+            f.write(etree.tostring(l.to_xml(), pretty_print=True))
+
     def cleanup(self):
         """Gets one path, to clean up at a time
 
-        This destroys the log, so use get_log first!
+        This destroys the log, so use get_log or write_log first!
         """
         if not self.log:
             return False

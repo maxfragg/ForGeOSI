@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 #
-# By Maximimlian Krueger
+# By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
 
@@ -15,6 +15,24 @@ import shutil
 import time
 #needs python-decorator, needed for signature preserving decorators
 from decorator import decorator 
+
+__doc__ = """\
+This library should simplify automating the control of virtual machines with
+VirtualBox, specifically for the use in computer forensics, but it might be useful
+else where too.
+
+To work properly, it expects a prepared VirtualBox image to start with. To 
+create a working image, a correct set osType is important, since all Vbox.os 
+functions rely on this to be OS specific. Next, the Guest Additions need to be 
+installed in the VM and the keyboard layout needs to match the one, of the host 
+PC, otherwise keyboard input might not match expectations.
+osLinux and osWindows both have special additional requirements, which are 
+described in Vbox.os
+
+The VM host system needs to be a Linux system for some things, since it uses 
+genisoimage and relies on "/tmp/" being a valid path on the host.
+
+"""
 
 usertoken=""
 """this token is added to user-strings to separate users from each other, use 
@@ -54,7 +72,7 @@ class VboxConfig():
 
 
     def get_nat_network(self, network_name="testnet"):
-        """creates a natnetwork, if none of the name exists.
+        """creates a nat network, if none of the name exists.
         
         This is needed to enabled networking between different VM instances
         """
@@ -109,7 +127,7 @@ def check_guestsession(func, *args, **kwargs):
 
 
 class Vbox():
-    """baseclass for controlling virtualbox
+    """base class for controlling VirtualBox
 
     This implements all operating system independent methods.
     Any method accepting an optional argument "wait" may return a progress object, 
@@ -171,7 +189,7 @@ class Vbox():
         self.running = False
 
         self.log = logger.Logger()
-        self.log.add_vm(clonename, basename, osType)
+        self.log.add_vm(clonename, basename, self.osType)
 
 
     @check_stopped  
@@ -180,9 +198,9 @@ class Vbox():
 
         Arguments:
             type - "headless" means, the machine runs without any gui, the only 
-                sensible way on a remote server. This parameter is changable to 
+                sensible way on a remote server. This parameter is changeable to 
                 "gui" for debugging only
-            wait - waits till the machine is initialised, it will not have 
+            wait - waits till the machine is initialized, it will not have 
                 finished booting yet. 
         """
 
@@ -207,7 +225,7 @@ class Vbox():
             shutdown - will send acpi signal to the machine and 
                 might take some time for the machine to power down.
                 Otherwise the machine will just be turned off, and its state in
-                virtualbox will be "aborted"
+                VirtualBox will be "aborted"
         """  
 
         if shutdown:
@@ -364,8 +382,8 @@ class Vbox():
     def create_guest_session(self, username="default", password="12345"):
         """creates a guest session for issuing commands to the guest system
 
-        While the VirtualBox API would support up to 256 simultanious guest 
-        sessions, here only one simultanious guestsession is supported, if more 
+        While the VirtualBox API would support up to 256 simultaneous guest 
+        sessions, here only one simultaneous guestsession is supported, if more 
         than one guestsession are needed, they need to be manged by hand.
 
         Arguments:
@@ -399,7 +417,7 @@ class Vbox():
         ubuntu hosts
 
         Arguments
-            folder_path - path to the folder, whichs content should be inside the 
+            folder_path - path to the folder, which's content should be inside the 
                 image
             iso_path - path, where the iso image should be created
             cdlabel - label, which will be shown inside the vm
@@ -456,14 +474,14 @@ class Vbox():
                 because otherwise user processes have the environment of root
             native_input - decides, if the virtualbox keyboard input or 
                 alternative methods will be used. If available, OS native input
-                methods should be prefered, and virtualbox should only be used, 
+                methods should be preferred, and virtualbox should only be used, 
                 if no alternative is available 
-            timeout - This is a timeout in miliseconds, which determines, when 
+            timeout - This is a timeout in milliseconds, which determines, when 
                 the process will be killed, 0 will disable the timeout
             wait_time - time to wait, until input is send via keyboard, only 
                 relevant in combination with wait=False/keyinput
-            wait - selects if the process should be created syncronous with input 
-                or if this function will return, while the porcess inside the VM
+            wait - selects if the process should be created synchronous with input 
+                or if this function will return, while the process inside the VM
                 is still running
         """
 
@@ -483,12 +501,13 @@ class Vbox():
             if key_input:
                 time.sleep(wait_time)
                 if native_input:
-                    self.os.keyboard_input(key_input=key_input, pid=process.pid)
+                    time.sleep(5)
+                    self.os.keyboard_input(key_input=key_input) #pid=process.pid
                 else:
-                    self.keyboard_input(keyinput)
+                    self.keyboard_input(key_input=key_input)
 
             if wait:
-                process.wait_for(virtualbox.library.ProcessWaitForFlag.terminate)
+                process.wait_for(2, 10000) #virtualbox.library.ProcessWaitForFlag.terminate
 
             stdout = ""
             stderr = ""
@@ -545,7 +564,7 @@ class Vbox():
 
         avoid this method, as result tends to be unreliable
 
-        Usefull scancodes might be:
+        Useful scancodes might be:
              1 - escape
             14 - backspace
             28 - enter
@@ -613,7 +632,7 @@ class Vbox():
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
-        """clean all data exept, what might have been exported
+        """clean all data except, what might have been exported
 
         This should be the last thing to do, just to make sure, we do not clutter
         our VirtualBox.

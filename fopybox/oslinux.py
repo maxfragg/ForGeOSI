@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 #
-# By Maximimlian Krueger
+# By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
 
@@ -30,18 +30,22 @@ class osLinux():
         else:
             cmd = command + "\n"
 
-        self.vb.run_process(command=self.term, keyinput=cmd, 
-            environment=self.env, wait=True)
+        self.vb.run_process(command=self.term, key_input=cmd, 
+            environment=self.env, native_input=True, wait=True)
 
 
     def _build_xdotool_args(self, window_class, name, pid):
     	"""helper to get the arguments for xdotool
+
+    	note that none of the options are really reliable, since they all depend
+    	on the windows having the correct fields set
+    	Additional, Unity in Ubuntu 12.04 is not working properly with xdotool
     	"""
     	args = []
 
         if window_class or name or pid:
         	#sync makes it hang, until a window is found with the propery
-            args = ["search --sync"]
+            args = ["search", "--sync"]
         if window_class:
             args = args + ["--class", window_class]
         if name:
@@ -51,7 +55,7 @@ class osLinux():
         return args
 
 
-    def keyboard_input(self, keyinput, window_class='', name='', pid=0):
+    def keyboard_input(self, key_input, window_class='', name='', pid=0):
         """Sends keyboard input to a running gui process.
 
         Arguments
@@ -65,13 +69,13 @@ class osLinux():
         """
 
         #type will simulate typing and interpret space '\n'
-        args = _build_xdotool_args(window_class, name, pid) + ["type"] 
+        args = self._build_xdotool_args(window_class, name, pid) + ["type"] 
         
         n = 30 #choose a sane number here, how many keys to send at once
 
-        keyinput_split = [keyinput[i:i+n] for i in range(0, len(keyinput), n)]
+        key_input_split = [key_input[i:i+n] for i in range(0, len(key_input), n)]
 
-        for part in keyinput_split:
+        for part in key_input_split:
 
             self.vb.run_process(command=self.xdt,arguments=args+[part], 
                 environment=self.env)
@@ -92,9 +96,9 @@ class osLinux():
         """
 
         #key uses keynames in oposite to type
-        args = _build_xdotool_args(window_class, name, pid) + ["key"]
+        args = self._build_xdotool_args(window_class, name, pid) + ["key"]
 
-        self.vb.run_process(command=self.xdt,arguments=args+key,
+        self.vb.run_process(command=self.xdt,arguments=args+[key],
                 environment=self.env)
 
 
@@ -146,7 +150,7 @@ class osLinux():
             self.vb.run_process(command="/usr/bin/firefox", 
                 arguments=["-new-tab",url], environment=self.env, wait=False)
         elif method == "shell":
-            self.run_shell_cmd(command="/usr/bin/firefox -new-tab"+url)
+            self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
 
 
     def uninstall_program(self, program):
