@@ -604,7 +604,7 @@ class Vbox():
 
         buttonstate = lmb + (2 * rmb) + (4 * mmb)
 
-       self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,buttonstate)
+        self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,buttonstate)
         if release:
             self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
 

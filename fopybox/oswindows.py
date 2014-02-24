@@ -30,7 +30,7 @@ class osWindows():
         if cmd:
             return self.vb.run_process(command=self.cmd, arguments=['/C', command])
         else:
-            return self.vb.run_process(command=self.term, arguments=["'"+command+"; stop-process powershell'")
+            return self.vb.run_process(command=self.term, arguments=["'"+command+"; stop-process powershell'"])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
