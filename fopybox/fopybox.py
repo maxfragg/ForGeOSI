@@ -485,6 +485,9 @@ class Vbox():
                 is still running
         """
 
+        #since stdin is broken:
+        stdin=""
+
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command, 
             arguments=arguments, stdin=stdin, environment=environment, 
@@ -502,7 +505,7 @@ class Vbox():
                 time.sleep(wait_time)
                 if native_input:
                     time.sleep(5)
-                    self.os.keyboard_input(key_input=key_input) #pid=process.pid
+                    self.os.keyboard_input(key_input=key_input, pid=process.pid)
                 else:
                     self.keyboard_input(key_input=key_input)
 
@@ -513,7 +516,7 @@ class Vbox():
             stderr = ""
 
 
-        self.log.add_process(process, arguments, stdin, key_input, stdout, stderr)
+        self.log.add_process(process, command ,arguments, stdin, key_input, stdout, stderr)
 
         return stdout, stderr
 
@@ -545,6 +548,16 @@ class Vbox():
         else:
             return progress
 
+    def copy_from_vm(self, source, dest, wait=True):
+        """Copy a file from the VM to the host
+        """
+
+        progress = self.guestsession.copy_from(source, destination)
+
+        if wait:
+            progress.wait_for_completion()
+        else:
+            return progress
 
     @check_running
     def keyboard_input(self, key_input):
@@ -572,7 +585,7 @@ class Vbox():
         """
         for s in scancode:
             self.session.console.keyboard.put_scancode(s)
-            self.log.add_keyboard("scancode: "+s)
+            self.log.add_keyboard("scancode: "+str(s))
 
     @check_running
     def mouse_input(self, x, y, lmb=1, mmb=0, rmb=0, release=True):
@@ -591,9 +604,9 @@ class Vbox():
 
         buttonstate = lmb + (2 * rmb) + (4 * mmb)
 
-        session.console.mouse.put_mouse_event_absolute(x,y,0,0,buttonstate)
+       self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,buttonstate)
         if release:
-            session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
+            self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
 
         self.log.add_mouse(x, y, lmb, mmb, rmb)
 

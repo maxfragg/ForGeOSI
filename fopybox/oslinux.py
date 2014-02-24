@@ -14,12 +14,13 @@ class osLinux():
         xdotool
     """
 
-    def __init__(self, vb, term="/usr/bin/xterm", env=[]):
+    def __init__(self, vb, term="/usr/bin/xterm", env=[], xdotool_extended=False):
         self.vb = vb
         self.term = term
         self.env = ["DISPLAY=:0", "USER="+vb.username, 
             "HOME=/home/"+vb.username] + env
         self.xdt = "/usr/bin/xdotool"
+        self.xdte = xdotool_extended
 
 
     def run_shell_cmd(self, command, close_shell=True):
@@ -42,6 +43,10 @@ class osLinux():
     	Additional, Unity in Ubuntu 12.04 is not working properly with xdotool
     	"""
     	args = []
+
+    	#turn this function into a noop if we do not want to use it (like on unity)
+    	if not self.xdte:
+    		return args
 
         if window_class or name or pid:
         	#sync makes it hang, until a window is found with the propery
