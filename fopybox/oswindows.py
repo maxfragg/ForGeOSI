@@ -58,7 +58,8 @@ class osWindows():
         else:
             if stop_ps:
                 command += "; stop-process powershell"
-            command = self._base64_encode_command(command)
+            self.vb.log.add_encodedCommand(command)
+            command = self._base64_encode_command(comman')
             return self.vb.run_process(command=self.term, arguments=["-inputformat", "none", "-EncodedCommand", command])
 
 
@@ -80,8 +81,8 @@ class osWindows():
         start-sleep -Milliseconds 500
         """
         if name:
-            command += """[Microsoft.VisualBasic.Interaction]::AppActivate(\\\""""+name+"""\\\")
-            """
+            command += '''[Microsoft.VisualBasic.Interaction]::AppActivate("'''+name+'''")
+            '''
         
         if pid:
             command += """$mypid ="""+pid+"""
@@ -96,19 +97,21 @@ class osWindows():
 
     def copy_file(self, source, destination):
         """copy a file on the guest, using the windows cmd copy command
+        Needs full paths, unix style with '/' as path separator
         """
-        self.run_shell_cmd(command="copy "+source+" "+destination)
+        self.run_shell_cmd(command='copy "'+source+'" "'+destination+'"')
 
 
     def move_file(self, source, destination):
         """move a file on the guest, using the windows move copy command
+        Needs full paths, unix style with '/' as path separator
         """
         self.run_shell_cmd(command="move "+source+" "+destination)
 
 
     def create_user(self, username, password):
         
-        command = """$objOu = [ADSI]\\"WinNT://$computer\\"
+        command = """$objOu = [ADSI]"WinNT://$computer"
         $objUser = $objOU.Create("User", {0})
         $objUser.setpassword({1})
         $objUser.SetInfo()
@@ -118,14 +121,9 @@ class osWindows():
         self.run_shell_cmd(command=command)
 
 
-    def download_file(self, url, destination):
-
-        command = '''$source = \\"{0}\\"
-        $destination = \\"{1}\\"
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($source, $destination)
-
-        '''.format(url,destination)
+    def download_file(self, url, filename):
+        #broken
+        command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,filename)
 
         self.run_shell_cmd(command=command)
 
@@ -181,11 +179,10 @@ class osWindows():
 
         This only works for progams using msi-based installers
         """
-        command = """$app = Get-WmiObject -Class Win32_Product `
-                     -Filter \\"Name = '{0}'\\"
+        command = '''$app = Get-WmiObject -Class Win32_Product `
+                     -Filter "Name = '{0}'"
                 $app.Uninstall()
-
-                """.format(program)
+                '''.format(program)
 
         self.run_shell_cmd(command=command)
 

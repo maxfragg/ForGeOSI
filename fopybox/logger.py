@@ -115,6 +115,23 @@ class LogCdMount():
     def to_xml(self):
         return toXML(self, nodeName="cd", ignore=['time'])
 
+class LogEncodedCommand():
+    """Stores readable version off the encodedCommand
+    """
+    def __init__(self, args):
+        self.args = args
+
+    def get_entry(self):
+        return {'arg': self.args}
+
+    def cleanup(self):
+        """return a path on the host, where data needs to be deleted or False
+        """
+        return False
+
+    def to_xml(self):
+        return toXML(self, nodeName="ReadableArg")
+
 
 class LogProcess():
     """Stores data of a single process, running in the VM
@@ -268,6 +285,9 @@ class Logger():
 
     def add_mouse(self, *args):
         self.log.append(LogMouse(*args))
+
+    def add_encodedCommand(self, *args):
+        self.log.append(LogEncodedCommand(*args))
 
     def get_log(self):
         for l in self.log:

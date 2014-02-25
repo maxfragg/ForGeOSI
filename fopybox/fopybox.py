@@ -583,14 +583,21 @@ class Vbox():
             ['win','r'] will send windows+r 
 
         Needs no Guest Additions
-        """
-        make_codes={'win': [0xE0, 0x5B], 'esc': [0x01], 
-            'bksp': [0x0E], 'ctrl': [0x1D], 'alt': [0x38],
-            'del': [0xE0, 0x53], 'tab': [0x0F], 'enter': [0x1c]}
 
-        break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 
-            'bksp': [0x8E], 'ctrl': [0x9D], 'alt': [0xB8],
-            'del': [ 0xE0, 0xD3], 'tab': [0x8F], 'enter': [0x9c]}
+        Arguments:
+            scancode - List of scancodes or chars
+            make_code - send the keypress
+            break_code - send the keyrelease
+        """
+        make_codes={'win': [0xE0, 0x5B], 'esc': [0x01], 'bksp': [0x0E], 
+            'ctrl': [0x1D], 'alt': [0x38], 'del': [0xE0, 0x53], 'tab': [0x0F], 
+            'enter': [0x1C], 'up': [0xE0, 0x48], 'left':[0xE0, 0x4B]
+            'right': [0xE0 ,0x4D], 'down': [0xE0, 0x50]}
+
+        break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 'bksp': [0x8E], 
+            'ctrl': [0x9D], 'alt': [0xB8],'del': [ 0xE0, 0xD3], 'tab': [0x8F], 
+            'enter': [0x9C], 'up': [0xE0, 0xC8], 'left':[0xE0, 0xCB],
+            'right': [0xE0 ,0xCD], 'down': [0xE0, 0xD0]}
 
         if make_code:
             for s in scancode:
@@ -598,7 +605,7 @@ class Vbox():
                     #the api only likes baseintegers, but hex codes are, what everybody
                     #uses for make/break codes
                     self.session.console.keyboard.put_scancodes([int(x) for x in make_codes[s]])
-                    self.log.add_keyboard("scancode: "+str(s))
+                    self.log.add_keyboard("makecode: "+str(s))
                 else:
                     #if its not in the list, assume, that it is a normal char/num
                     self.keyboard_input(s)
@@ -607,6 +614,8 @@ class Vbox():
             for s in scancode:
                 if s in break_codes:
                     self.session.console.keyboard.put_scancodes([int(x) for x in break_codes[s]])
+                    self.log.add_keyboard("breakcode: "+str(s))
+
 
     @check_running
     def mouse_input(self, x, y, lmb=1, mmb=0, rmb=0, release=True):
@@ -620,7 +629,7 @@ class Vbox():
             lmb - state of the left mouse button, 1 pressed, 0 unpressed
             mmb - state of the middle mouse button, 1 pressed, 0 unpressed
             rmb - state of the right mouse button, 1 pressed, 0 unpressed
-            release - releases the mousebutton, only triggering one click
+            release - releases the mouse button, only triggering one click
         """
 
         buttonstate = lmb + (2 * rmb) + (4 * mmb)
