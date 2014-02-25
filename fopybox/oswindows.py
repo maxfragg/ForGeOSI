@@ -4,12 +4,17 @@
 # By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
+# _base64_encode_command is straight from 
+# http://jasagerpwn.googlecode.com/svn/trunk/src/powershellPayload.py
+
+
+import base64
 
 class osWindows():
     """Windows specific operations
 
-    Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM.
+    Classes starting with OS should all implement the same interface, that offers 
+    features, that depend on the operation system, running in the VM.
     For this class to work, @term needs to be the path to a windows powershell!
     Expects the operating system to be a MS Windows 7 (NT6.1) or newer, with 
     powershell 2.0 or newer 
@@ -19,18 +24,42 @@ class osWindows():
             term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
         self.vb = vb
         self.term = term
-        self.cmd ="C:\\Windows\\System32\\cmd.exe"
-        self.ie ="C:\\Program Files (x86)\\Internet Explorer\iexplore.exe"
+        self.cmd = "C:\\Windows\\System32\\cmd.exe"
+        self.ie = "C:\\Program Files (x86)\\Internet Explorer\iexplore.exe"
 
 
-    def run_shell_cmd(self, command, cmd=False):
+    def _base64_encode_command(self, command):
+        """using base64 encoded commands solves issues with quoting in the
+        VirtualBox execute function, needed as a workaround, for pythons 
+        base64 function not inserting \x00 after each char
+        """
+
+        # blank command will store our fixed unicode variable
+        blank_command = ""
+        # loop through each character and insert null byte
+        for char in command:
+          # insert the nullbyte
+          blank_command += char + "\x00"
+          
+        # assign powershell command as the new one
+        command = blank_command
+        # base64 encode the powershell command
+        command = base64.b64encode(command)
+        # return the powershell code
+        return command
+
+
+    def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
         cmd.exe
         """
         if cmd:
             return self.vb.run_process(command=self.cmd, arguments=['/C', command])
         else:
-            return self.vb.run_process(command=self.term, arguments=["'"+command+"; stop-process powershell'"])
+            if stop_ps:
+                command += "; stop-process powershell"
+            command = self._base64_encode_command(command)
+            return self.vb.run_process(command=self.term, arguments=["-inputformat", "none", "-EncodedCommand", command])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
@@ -51,15 +80,15 @@ class osWindows():
         start-sleep -Milliseconds 500
         """
         if name:
-            command = command + """[Microsoft.VisualBasic.Interaction]::AppActivate(\\\""""+name+"""\\\")
+            command += """[Microsoft.VisualBasic.Interaction]::AppActivate(\\\""""+name+"""\\\")
             """
         
         if pid:
-            command = command + """$mypid ="""+pid+"""
+            command += """$mypid ="""+pid+"""
             Set-ForegroundWindow (Get-Process -id $mypid).MainWindowHandle
             """
 
-        command = command + """[System.Windows.Forms.SendKeys]::SendWait(\\\""""+key_input+"""\\\")
+        command += """[System.Windows.Forms.SendKeys]::SendWait(\\\""""+key_input+"""\\\")
         """
 
         self.run_shell_cmd(command=command)
@@ -103,25 +132,32 @@ class osWindows():
 
 
 
-    def open_browser(self, url="www.google.com", method="direct"):
+    def open_browser(self, url="www.google.com", method="direct", timeout=20000):
         """Opens a Internet Explorer with the given url
 
         Arguments:
             url - url of the website to open
-            method - decide how to run the browser, currently "direct" and 
-                "shell" are available 
+            method - decide how to run the browser.
+                Valid options: 
+                    "direct" - VirtualBox-API
+                    "shell" - Windows Powershell
+                    "start" - Startmenu
+                Note: direct will block, until the browser is closed, if no 
+                timeout is set!
+            timeout - in Milliseconds
         """
         if method is "direct":
-            self.vb.run_process(command=self.ie, arguments=[url])
-        
-        elif method is "shell":
-            command = '''$ie = new-object -com "InternetExplorer.Application"
-            $ie.navigate(\\"{0}\\")
-            $ie.visible = $true
+            self.vb.run_process(command=self.ie, arguments=[url], timeout=timeout)
 
-            '''.format(url)
+        elif method is "shell":
+            command = '''$ie = new-object -com "InternetExplorer.Application";$ie.navigate("{0}");$ie.visible = $true'''.format(url)
 
             self.run_shell_cmd(command=command)
+
+        elif method is "start":
+            self.vb.keyboard_scancodes(['win','r'])
+            self.vb.keyboard_input('iexplore '+url+'\n')
+
 
 
     def kill_process(self, name='', pid=0):
@@ -133,9 +169,9 @@ class osWindows():
 
         command = "Stop-Process"
         if name:
-            command = command + "-Name "+name
+            command += "-Name "+name
         if pid:
-            command = command + "-Id "+pid
+            command += "-Id "+pid
 
         self.run_shell_cmd(command=command)
 

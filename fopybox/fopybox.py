@@ -563,7 +563,8 @@ class Vbox():
     def keyboard_input(self, key_input):
         """sends raw keypresses to the vm
 
-        avoid this method, as result tends to be unreliable
+        avoid this method, as result tends to be unreliable.
+        Needs no Guest Additions
         """
 
         self.session.console.keyboard.put_keys(key_input)
@@ -572,20 +573,40 @@ class Vbox():
 
 
     @check_running
-    def keyboard_scancodes(self, scancode=[]):
+    def keyboard_scancodes(self, scancode=[], make_code=True, break_code=True):
         """sends scancodes to the vm
 
         avoid this method, as result tends to be unreliable
 
-        Useful scancodes might be:
-             1 - escape
-            14 - backspace
-            28 - enter
-            224, 91 - super/windows
+        uses short names for scancodes as strings or single charakters.
+        Example:
+            ['win','r'] will send windows+r 
+
+        Needs no Guest Additions
         """
-        for s in scancode:
-            self.session.console.keyboard.put_scancode(s)
-            self.log.add_keyboard("scancode: "+str(s))
+        make_codes={'win': [0xE0, 0x5B], 'esc': [0x01], 
+            'bksp': [0x0E], 'ctrl': [0x1D], 'alt': [0x38],
+            'del': [0xE0, 0x53], 'tab': [0x0F], 'enter': [0x1c]}
+
+        break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 
+            'bksp': [0x8E], 'ctrl': [0x9D], 'alt': [0xB8],
+            'del': [ 0xE0, 0xD3], 'tab': [0x8F], 'enter': [0x9c]}
+
+        if make_code:
+            for s in scancode:
+                if s in make_codes:
+                    #the api only likes baseintegers, but hex codes are, what everybody
+                    #uses for make/break codes
+                    self.session.console.keyboard.put_scancodes([int(x) for x in make_codes[s]])
+                    self.log.add_keyboard("scancode: "+str(s))
+                else:
+                    #if its not in the list, assume, that it is a normal char/num
+                    self.keyboard_input(s)
+
+        if break_code:
+            for s in scancode:
+                if s in break_codes:
+                    self.session.console.keyboard.put_scancodes([int(x) for x in break_codes[s]])
 
     @check_running
     def mouse_input(self, x, y, lmb=1, mmb=0, rmb=0, release=True):
