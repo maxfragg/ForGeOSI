@@ -10,6 +10,7 @@ import time
 import shutil
 import uuid
 import hashlib
+import os
 from lxml import etree
 
 
@@ -220,7 +221,7 @@ class LogVM():
         return toXML(self, nodeName="vm")
 
 
-class LogInterface():
+class _LogInterface():
     """This is just an example, of the logging class interface
 
     every logger needs to implement this interface"""

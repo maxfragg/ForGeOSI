@@ -549,7 +549,8 @@ class Vbox():
             return progress
 
     def copy_from_vm(self, source, dest, wait=True):
-        """Copy a file from the VM to the host
+        """Copy a file from the VM to the host, creates no log, since it should
+        not alter the guest
         """
 
         progress = self.guestsession.copy_from(source, destination)
