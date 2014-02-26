@@ -96,7 +96,7 @@ class osWindows():
             Set-ForegroundWindow (Get-Process -id $mypid).MainWindowHandle
             """
 
-        command += '''[System.Windows.Forms.SendKeys]::SendWait("'''+key_input+'''")"""
+        command += '''[System.Windows.Forms.SendKeys]::SendWait("'''+key_input+'''")'''
 
         self.run_shell_cmd(command=command)
 
