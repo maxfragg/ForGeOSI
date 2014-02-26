@@ -74,7 +74,7 @@ class osWindows():
         """sends keyboard input using windows powershell and visual basic
 
         Using more than one identifier is not advised, since they are not 
-        combined as on Linux
+        combined as on Linux, use for plain text only
 
         Arguments:
             key_input - input send to the program
@@ -92,7 +92,7 @@ class osWindows():
             '''
         
         if pid:
-            command += """$mypid ="""+pid+"""
+            command += """$mypid ="""+str(pid)+"""
             Set-ForegroundWindow (Get-Process -id $mypid).MainWindowHandle
             """
 
@@ -221,5 +221,5 @@ class osWindows():
         installed
         """
 
-        self.uninstall_program("Oracle VM VirtualBox Guest Additions"
+        self.uninstall_program("Oracle VM VirtualBox Guest Additions "
             +str(version))

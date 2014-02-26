@@ -516,7 +516,7 @@ class Vbox():
             stderr = ""
 
 
-        self.log.add_process(process, command ,arguments, stdin, key_input, stdout, stderr)
+        self.log.add_process(process, command ,arguments, stdin, key_input, stdout, stderr, process.pid)
 
         return stdout, stderr
 

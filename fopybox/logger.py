@@ -50,27 +50,22 @@ class LogCopiedFile():
         self.timeRate = timeRate
         self.upTime = upTime
 
-
     def get_file_size(self):
         filesize = os.path.getsize(self.tmp)
         return filesize
-
 
     def copy_to_temp(self):
         tmp = '/tmp/%s.forensig20' % str(uuid.uuid4())
         shutil.copy(self.source, tmp)
         return tmp
 
-
     def calc_md5sum(self):
         md5 = hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
         return md5
 
-
     def calc_sha256sum(self):
         sha256 = hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
         return sha256
-
 
     def get_entry(self):
         return {'source': self.source,
@@ -79,10 +74,8 @@ class LogCopiedFile():
             'filesize': self.filesize, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
-
     def cleanup(self):
         return self.tmp
-
 
     def to_xml(self):
         return toXML(self, nodeName="copiedFile", ignore=['time'])
@@ -99,18 +92,15 @@ class LogCdMount():
         self.timeRate = timeRate
         self.upTime = upTime
 
-
     def get_entry(self):
         return {'path': self.path, 'realtime': self.realtime, 'time': self.time, 
             'timeRate': self.timeRate, 'upTime': self.upTime}
-
 
     def cleanup(self):
         if self.delete:
             return self.path
         else:
             return False
-
 
     def to_xml(self):
         return toXML(self, nodeName="cd", ignore=['time'])
@@ -137,7 +127,7 @@ class LogProcess():
     """Stores data of a single process, running in the VM
     """
     def __init__(self, process, path, arguments, stdin='', key_input='', stdout='',
-            stderr='', timeoffset=0, timeRate=0, upTime=0):
+            stderr='', pid=0, timeoffset=0, timeRate=0, upTime=0):
         self.process = process
         self.path = path
         self.arguments = arguments
@@ -145,23 +135,21 @@ class LogProcess():
         self.key_input = key_input
         self.stdout = stdout
         self.stderr = stderr
+        self.pid = pid
         self.realtime = time.time()
         self.time = time.time() + timeoffset
         self.timeRate = timeRate
         self.upTime = upTime
 
-
     def get_entry(self):
         return {'process': self.process, 'path': self.path, 
             'arguments': self.arguments, 'stdin': self.stdin,
             'key_input': self.key_input, 'stdout': self.stdout, 
-            'stderr': self.stderr, 'realtime': self.realtime, 'time': self.time, 
-            'timeRate': self.timeRate, 'upTime': self.upTime}
-
+            'stderr': self.stderr, 'pid': self.pid, 'realtime': self.realtime, 
+            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
     def cleanup(self):
         return False
-
 
     def to_xml(self):
         return toXML(self, nodeName="process", ignore=['time'])
@@ -176,15 +164,12 @@ class LogRawKeyboard():
         self.timeRate = timeRate
         self.upTime = upTime
 
-
     def get_entry(self):
         return {'keyboard input': self.key_input, 'realtime': self.realtime, 
             'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
 
-
     def cleanup(self):
         return False
-
 
     def to_xml(self):
         return toXML(self, nodeName="keyboard_input", ignore=['time'])
@@ -204,17 +189,14 @@ class LogMouse():
         self.timeRate = timeRate
         self.upTime = upTime
 
-
     def get_entry(self):
         return {'x': self.x, 'y': self.y, 'left mouse button': self.lmb,
         'middle mouse button': self.mmb, 'right mouse button': self.rmb,
         'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate,
         'upTime': self.upTime}
 
-
     def cleanup(self):
         return False
-
 
     def to_xml(self):
         return toXML(self, nodeName="mouse_input", ignore=['time'])
@@ -261,42 +243,58 @@ class Logger():
     """A simple logger for fopybox
 
     This logger creates a protocol of actions performed with pyvbox, that altered
-    the virtual machine image. If wished, a xml-export is available with get_log
+    the virtual machine image. XML-export is available with get_log and write_log
 
     """
 
     def __init__(self):
         self.log = []
 
-    def add_vm(self, *args):
-        self.log.append(LogVM(*args))
+    def add_vm(self, *args, **kwargs):
+        self.log.append(LogVM(*args, **kwargs))
 
-    def add_process(self, *args):
-        self.log.append(LogProcess(*args))
+    def add_process(self, *args, **kwargs):
+        self.log.append(LogProcess(*args, **kwargs))
 
-    def add_file(self, *args):
-        self.log.append(LogCopiedFile(*args))
+    def add_file(self, *args, **kwargs):
+        self.log.append(LogCopiedFile(*args, **kwargs))
 
-    def add_cd(self, *args):
-        self.log.append(LogCdMount(*args))
+    def add_cd(self, *args, **kwargs):
+        self.log.append(LogCdMount(*args, **kwargs))
 
-    def add_keyboard(self, *args):
-        self.log.append(LogRawKeyboard(*args))
+    def add_keyboard(self, *args, **kwargs):
+        self.log.append(LogRawKeyboard(*args, **kwargs))
 
-    def add_mouse(self, *args):
-        self.log.append(LogMouse(*args))
+    def add_mouse(self, *args, **kwargs):
+        self.log.append(LogMouse(*args, **kwargs))
 
-    def add_encodedCommand(self, *args):
-        self.log.append(LogEncodedCommand(*args))
+    def add_encodedCommand(self, *args, **kwargs):
+        self.log.append(LogEncodedCommand(*args, **kwargs))
+
+    def get_pid(self, path=''):
+        """Find the PID of a previously started process based on the path
+
+        Returns a list of all found pids matching the path, or all pids, if no
+        path was given
+        """
+        pids = []
+        for l in self.log:
+            if isinstance(l, LogProcess):
+                if path in l.path:
+                    pids.append(l.pid)
+        return pids
+
 
     def get_log(self):
         for l in self.log:
             print etree.tostring(l.to_xml(), pretty_print=True)
 
+
     def write_log(self, path):
         f = open(path, 'wb')
         for l in self.log:
             f.write(etree.tostring(l.to_xml(), pretty_print=True))
+
 
     def cleanup(self):
         """Gets one path, to clean up at a time
