@@ -34,33 +34,40 @@ class osWindows():
         base64 function not inserting \x00 after each char
         """
 
-        # blank command will store our fixed unicode variable
         blank_command = ""
-        # loop through each character and insert null byte
         for char in command:
-          # insert the nullbyte
           blank_command += char + "\x00"
           
-        # assign powershell command as the new one
         command = blank_command
-        # base64 encode the powershell command
         command = base64.b64encode(command)
-        # return the powershell code
         return command
+
+    def _base64_decode_command(self, command):
+        """debugging purpose only
+        """
+
+        command = base64.b64decode(command)
+        blank_command = ""
+        i = 0;
+        for char in command:
+            if (i % 2) == 0:
+                blank_command += char
+            i = i + 1
+        return blank_command
 
 
     def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
-        cmd.exe
+        cmd.exe, needs properly split arguments for cmd=True
         """
         if cmd:
-            return self.vb.run_process(command=self.cmd, arguments=['/C', command])
+            return self.vb.run_process(command=self.cmd, arguments=["/C"]+command)
         else:
             if stop_ps:
                 command += "; stop-process powershell"
             self.vb.log.add_encodedCommand(command)
-            command = self._base64_encode_command(comman')
-            return self.vb.run_process(command=self.term, arguments=["-inputformat", "none", "-EncodedCommand", command])
+            command = self._base64_encode_command(command)
+            return self.vb.run_process(command=self.term, arguments=["-OutputFormat","Text","-inputformat", "none", "-EncodedCommand", command])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
@@ -89,30 +96,48 @@ class osWindows():
             Set-ForegroundWindow (Get-Process -id $mypid).MainWindowHandle
             """
 
-        command += """[System.Windows.Forms.SendKeys]::SendWait(\\\""""+key_input+"""\\\")
-        """
+        command += '''[System.Windows.Forms.SendKeys]::SendWait("'''+key_input+'''")"""
 
         self.run_shell_cmd(command=command)
 
 
-    def copy_file(self, source, destination):
+    def copy_file(self, source, destination, cmd=True):
         """copy a file on the guest, using the windows cmd copy command
-        Needs full paths, unix style with '/' as path separator
+        Arguments:
+            source - source to copy from
+            destination - destination to copy to
+            cmd - used cmd.exe or powershell
+                
+        Both paths should be using '\\\\' (2 Backslashes) as path separator and 
+        need to be absolute
         """
-        self.run_shell_cmd(command='copy "'+source+'" "'+destination+'"')
+
+        if cmd:
+            self.run_shell_cmd(command=["copy",source,destination], cmd=True)
+        else:
+            self.run_shell_cmd(command="copy "+source+" "+destination, cmd=False)
 
 
-    def move_file(self, source, destination):
+    def move_file(self, source, destination, cmd=True):
         """move a file on the guest, using the windows move copy command
-        Needs full paths, unix style with '/' as path separator
+        Arguments:
+            source - source to move from
+            destination - destination to move to
+            cmd - used cmd.exe or powershell
+
+        Both paths should be using '\\\\' (2 Backslashes) as path separator and 
+        need to be absolute
         """
-        self.run_shell_cmd(command="move "+source+" "+destination)
+        if cmd:
+            self.run_shell_cmd(command=["move", source, destination], cmd=True)
+        else:
+            self.run_shell_cmd(command="move "+source+" "+destination, cmd=False)
 
 
     def create_user(self, username, password):
         
         command = """$objOu = [ADSI]"WinNT://$computer"
-        $objUser = $objOU.Create("User", {0})
+        $objUser = $objOu.Create("User", {0})
         $objUser.setpassword({1})
         $objUser.SetInfo()
 
@@ -163,13 +188,13 @@ class osWindows():
         one parameter needs to be given
         """
 
-        assert(name and pid)
+        assert(name or pid)
 
-        command = "Stop-Process"
+        command = "Stop-Process "
         if name:
             command += "-Name "+name
         if pid:
-            command += "-Id "+pid
+            command += "-Id "+str(pid)
 
         self.run_shell_cmd(command=command)
 
