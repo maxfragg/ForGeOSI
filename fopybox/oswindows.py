@@ -22,7 +22,8 @@ class osWindows():
 
     General notes:
         All paths on the guest should be absolute and use 2 backslashes as 
-        separator
+        separator, paths with '-' in it will most likely break in any function
+        using powershell
     """
 
     def __init__(self,vb,
@@ -108,6 +109,7 @@ class osWindows():
 
     def copy_file(self, source, destination, cmd=True):
         """copy a file on the guest, using the windows cmd copy command
+
         Arguments:
             source - source to copy from
             destination - destination to copy to
@@ -122,6 +124,7 @@ class osWindows():
 
     def move_file(self, source, destination, cmd=True):
         """move a file on the guest, using the windows move copy command
+
         Arguments:
             source - source to move from
             destination - destination to move to

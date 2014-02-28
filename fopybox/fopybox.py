@@ -546,7 +546,7 @@ class Vbox():
         This leaves no plausible trace for faking, so use with care
         """
 
-        progress = self.guestsession.copy_to_vm(source, destination, [])
+        progress = self.guestsession.copy_to(source, destination, [])
 
         self.log.add_file(source=source, destination=dest)
 
