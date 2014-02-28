@@ -305,8 +305,10 @@ class Logger():
         if not self.log:
             return False
         else:
+            if len(self.log) is 0:
+                return False
             path = self.log.pop().cleanup()
-            while path is False:
+            while path is False and len(self.log) > 0:
                 path = self.log.pop().cleanup()
             return path
 

@@ -427,34 +427,38 @@ class Vbox():
         """
 
         #basic sanity check
-        if os.path.exists(iso_path) == False:
+        if os.path.exists(folder_path) == False:
+            print "Error: Path does not exist"
             return
 
-        args = ["-J", "-l", "-R", "-V", cdlabel, "-iso-level", "4" ,"-o ",
-            folder_path, iso_path]
+        args = ["-J", "-l", "-R", "-V", cdlabel, "-iso-level", "4" ,"-o",
+            iso_path, folder_path]
 
         subprocess.call(["mkisofs"]+args)
 
-        self.session.machine.mount_medium("IDE",0,0,iso_path,False)
-
-        self.log.add_cd(iso_path,True)
+        self.mount_cd(path=iso_path,remove_image=True)
 
 
     @check_running
-    def mount_cd(self,path):
+    def mount_cd(self, path, remove_image=False):
         """mounts an iso image to the VM
         """
 
-        self.session.machine.mount_medium("IDE",0,0,path,False)
-        self.log.add_cd(path)
+        self.medium = self.vb.open_medium(path, 
+            virtualbox.library.DeviceType.dvd, 
+            virtualbox.library.AccessMode.read_only, False)
+        self.session.machine.mount_medium("IDE",1,0,self.medium,False)
+
+        self.log.add_cd(path,remove_image)
 
 
     @check_running
     def umount_cd(self):
         """Removes a cd from the emulated IDE CD-drive
         """
-
-        self.session.machine.mount_medium("IDE",0,0,"",False)
+        self.session.machine.mount_medium("IDE",1,0,
+            virtualbox.library.IMedium(),False)
+        self.medium.close()
 
 
     @check_running
@@ -597,17 +601,17 @@ class Vbox():
             'ctrl': [0x1D], 'alt': [0x38], 'del': [0xE0, 0x53], 'tab': [0x0F], 
             'enter': [0x1C], 'up': [0xE0, 0x48], 'left':[0xE0, 0x4B],
             'right': [0xE0 ,0x4D], 'down': [0xE0, 0x50],
-            'F1': [0x3B], 'F2': [0x3C], 'F3': [0x3D], 'F4': [0x3E], 'F5': [0x3F],
-            'F6': [0x40], 'F7': [0x41], 'F8': [0x42], 'F9': [0x43], 
-            'F10': [0x44], 'F11': [0x57], 'F12': [0x58]}
+            'f1': [0x3B], 'f2': [0x3C], 'f3': [0x3D], 'f4': [0x3E], 'f5': [0x3F],
+            'f6': [0x40], 'f7': [0x41], 'f8': [0x42], 'f9': [0x43], 
+            'f10': [0x44], 'f11': [0x57], 'f12': [0x58]}
 
         break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 'bksp': [0x8E], 
             'ctrl': [0x9D], 'alt': [0xB8],'del': [ 0xE0, 0xD3], 'tab': [0x8F], 
             'enter': [0x9C], 'up': [0xE0, 0xC8], 'left':[0xE0, 0xCB],
             'right': [0xE0 ,0xCD], 'down': [0xE0, 0xD0],
-            'F1': [0xBB], 'F2': [0xBC], 'F3': [0xBD], 'F4': [0xBE], 'F5': [0xBF],
-            'F6': [0xC0], 'F7': [0xC1], 'F8': [0xC2], 'F9': [0xC3], 
-            'F10': [0xC4], 'F11': [0xD7], 'F12': [0xD8]}
+            'f1': [0xBB], 'f2': [0xBC], 'f3': [0xBD], 'f4': [0xBE], 'f5': [0xBF],
+            'f6': [0xC0], 'f7': [0xC1], 'f8': [0xC2], 'f9': [0xC3], 
+            'f10': [0xC4], 'f11': [0xD7], 'f12': [0xD8]}
 
         if make_code:
             for s in scancode:
@@ -676,7 +680,7 @@ class Vbox():
     def get_ip(self, adapter=0):
         """returns the IPv4 address of the given adapter
 
-        Needs guest additions installed
+        Needs guest additions installed, not reliable with windows guests
         """
 
         return self.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
@@ -691,7 +695,7 @@ class Vbox():
         our VirtualBox.
         """
         path = self.log.cleanup()
-        while path is not False:
+        while path:
             shutil.rmtree(path, ignore_errors)
             path = self.log.cleanup()
 

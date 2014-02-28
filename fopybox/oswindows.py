@@ -9,6 +9,7 @@
 
 
 import base64
+import time
 
 class osWindows():
     """Windows specific operations
@@ -18,6 +19,10 @@ class osWindows():
     For this class to work, @term needs to be the path to a Windows Powershell.
     Expects the operating system to be a MS Windows 7 (NT6.1) or newer, with 
     Powershell 2.0 or newer installed.
+
+    General notes:
+        All paths on the guest should be absolute and use 2 backslashes as 
+        separator
     """
 
     def __init__(self,vb,
@@ -43,7 +48,7 @@ class osWindows():
         return command
 
     def _base64_decode_command(self, command):
-        """debugging purpose only
+        """debugging purpose only, decodes base64 encoded commands
         """
 
         command = base64.b64decode(command)
@@ -107,9 +112,6 @@ class osWindows():
             source - source to copy from
             destination - destination to copy to
             cmd - used cmd.exe or Powershell
-                
-        Both paths should be using '\\\\' (2 Backslashes) as path separator and 
-        need to be absolute
         """
 
         if cmd:
@@ -124,9 +126,6 @@ class osWindows():
             source - source to move from
             destination - destination to move to
             cmd - used cmd.exe or Powershell
-
-        Both paths should be using '\\\\' (2 Backslashes) as path separator and 
-        need to be absolute
         """
         if cmd:
             self.run_shell_cmd(command=["move", source, destination], cmd=True)
@@ -135,13 +134,12 @@ class osWindows():
 
 
     def create_user(self ,username, password):
-        """Creates a new user in the guest with default privileges
+        """Creates a new user in the guest with default privileges. The 
+        guestsession needs to belong to a administrator user
 
         Arguments:
-            admin_username - Name of an existing Admin in the guest
-            admin_password - Matching password
             username - Name for the new user
-            password - Password for the new userse
+            password - Password for the new user
         """
         
         command = """
@@ -156,9 +154,15 @@ class osWindows():
         self.run_shell_cmd(command=command)
 
 
-    def download_file(self, url, filename):
+    def download_file(self, url, path):
+        """Download a file using powershell
+
+        Arguments:
+            url - url to download from
+            path - full path, where the file should be saved
+        """
         
-        command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,filename)
+        command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,path)
 
         self.run_shell_cmd(command=command)
 
@@ -174,6 +178,7 @@ class osWindows():
                 Valid options: 
                     "direct" - VirtualBox-API
                     "shell" - Windows Powershell
+                    "run" - Windows run dialog
                     "start" - Startmenu
                 Note: direct will block, until the browser is closed, if no 
                 timeout is set!
@@ -187,8 +192,14 @@ class osWindows():
 
             self.run_shell_cmd(command=command)
 
-        elif method is "start":
+        elif method is "run":
             self.vb.keyboard_scancodes(['win','r'])
+            time.sleep(5)
+            self.vb.keyboard_input('iexplore '+url+'\n')
+
+        elif method is "start":
+            self.vb.keyboard_scancodes(['win'])
+            time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
 
 
