@@ -26,6 +26,7 @@ create a working image, a correct set osType is important, since all Vbox.os
 functions rely on this to be OS specific. Next, the Guest Additions need to be 
 installed in the VM and the keyboard layout needs to match the one, of the host 
 PC, otherwise keyboard input might not match expectations.
+The hostname and the VM name of the base-vm also need to match for simplicity
 osLinux and osWindows both have special additional requirements, which are 
 described in Vbox.os
 
@@ -598,7 +599,7 @@ class Vbox():
             'right': [0xE0 ,0x4D], 'down': [0xE0, 0x50],
             'F1': [0x3B], 'F2': [0x3C], 'F3': [0x3D], 'F4': [0x3E], 'F5': [0x3F],
             'F6': [0x40], 'F7': [0x41], 'F8': [0x42], 'F9': [0x43], 
-            'F10': [0x44], 'F11': [0x57], 'F12': 0x58}
+            'F10': [0x44], 'F11': [0x57], 'F12': [0x58]}
 
         break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 'bksp': [0x8E], 
             'ctrl': [0x9D], 'alt': [0xB8],'del': [ 0xE0, 0xD3], 'tab': [0x8F], 
@@ -606,7 +607,7 @@ class Vbox():
             'right': [0xE0 ,0xCD], 'down': [0xE0, 0xD0],
             'F1': [0xBB], 'F2': [0xBC], 'F3': [0xBD], 'F4': [0xBE], 'F5': [0xBF],
             'F6': [0xC0], 'F7': [0xC1], 'F8': [0xC2], 'F9': [0xC3], 
-            'F10': [0xC4], 'F11': [0xD7], 'F12': 0xD8}
+            'F10': [0xC4], 'F11': [0xD7], 'F12': [0xD8]}
 
         if make_code:
             for s in scancode:

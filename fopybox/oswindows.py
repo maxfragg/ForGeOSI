@@ -15,9 +15,9 @@ class osWindows():
 
     Classes starting with OS should all implement the same interface, that offers 
     features, that depend on the operation system, running in the VM.
-    For this class to work, @term needs to be the path to a windows powershell!
+    For this class to work, @term needs to be the path to a Windows Powershell.
     Expects the operating system to be a MS Windows 7 (NT6.1) or newer, with 
-    powershell 2.0 or newer 
+    Powershell 2.0 or newer installed.
     """
 
     def __init__(self,vb,
@@ -157,7 +157,7 @@ class osWindows():
 
 
     def download_file(self, url, filename):
-        #broken
+        
         command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,filename)
 
         self.run_shell_cmd(command=command)
