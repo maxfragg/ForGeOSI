@@ -88,7 +88,7 @@ class osWindows():
         start-sleep -Milliseconds 500
         """
         if name:
-            command += '''[Microsoft.VisualBasic.Interaction]::AppActivate("'''+name+'''")
+            command += '''(New-Object -ComObject wscript.shell).AppActivate("'''+name+'''")
             '''
         
         if pid:
@@ -106,7 +106,7 @@ class osWindows():
         Arguments:
             source - source to copy from
             destination - destination to copy to
-            cmd - used cmd.exe or powershell
+            cmd - used cmd.exe or Powershell
                 
         Both paths should be using '\\\\' (2 Backslashes) as path separator and 
         need to be absolute
@@ -123,7 +123,7 @@ class osWindows():
         Arguments:
             source - source to move from
             destination - destination to move to
-            cmd - used cmd.exe or powershell
+            cmd - used cmd.exe or Powershell
 
         Both paths should be using '\\\\' (2 Backslashes) as path separator and 
         need to be absolute
@@ -134,14 +134,24 @@ class osWindows():
             self.run_shell_cmd(command="move "+source+" "+destination, cmd=False)
 
 
-    def create_user(self, username, password):
-        
-        command = """$objOu = [ADSI]"WinNT://$computer"
-        $objUser = $objOu.Create("User", {0})
-        $objUser.setpassword({1})
-        $objUser.SetInfo()
+    def create_user(self ,username, password):
+        """Creates a new user in the guest with default privileges
 
-        """.format(username, password)
+        Arguments:
+            admin_username - Name of an existing Admin in the guest
+            admin_password - Matching password
+            username - Name for the new user
+            password - Password for the new userse
+        """
+        
+        command = """
+        [ADSI]$server="WinNT://{0}"
+        $user=$server.create("user","{1}")
+        $user.setpassword("{2}")
+        $user.SetInfo()
+        [ADSI]$group="WinNT://{0}/Power Users,Group"
+        $group.add($user.path)
+        """.format(self.vb.basename, username, password)
 
         self.run_shell_cmd(command=command)
 

@@ -185,7 +185,7 @@ class Vbox():
 
         self.session = self.vm.create_session()
         self.guestsession = False
-
+        self.basename = basename
         self.running = False
 
         self.log = logger.Logger()
@@ -222,10 +222,12 @@ class Vbox():
     def stop(self, shutdown=True, wait=True):
         """Stop a running machine
         Arguments:
-            shutdown - will send acpi signal to the machine and 
+            shutdown - will send acpi signal to the machine
                 might take some time for the machine to power down.
                 Otherwise the machine will just be turned off, and its state in
                 VirtualBox will be "aborted"
+                Can hang, if the OS requires interaction, so try to kill all 
+                applications first
         """  
 
         if shutdown:
