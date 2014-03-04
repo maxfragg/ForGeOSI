@@ -108,6 +108,7 @@ class LogCdMount():
     def to_xml(self):
         return toXML(self, nodeName="cd", ignore=['time'])
 
+
 class LogEncodedCommand():
     """Stores readable version off the encodedCommand
     """
@@ -305,12 +306,16 @@ class Logger():
                     pids.append(l.pid)
         return pids
 
+
     def get_warnings(self):
         """Fast way to check for warnings
         """
+        warn = ''
         for l in self.log:
             if isinstance(l, LogWarning):
-                print(l.warning)
+                warn += (l.warning)+'\n'
+        return warn
+
 
     def get_log(self):
         for l in self.log:

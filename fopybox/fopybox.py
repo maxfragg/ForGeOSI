@@ -273,7 +273,7 @@ class Vbox():
         This method should not be needed to be called form outside
         """
         try:
-            self.vm.lock_machine(self.session,virtualbox.library.LockType.shared)
+            self.vm.lock_machine(self.session, virtualbox.library.LockType.shared)
         except:
             pass 
 
@@ -290,12 +290,13 @@ class Vbox():
 
 
     @check_stopped
-    def export(self, path="/tmp/disk.vdi", wait=True, 
-        controller=ControllerType.SATA, port=0, disk=0):
+    def export(self, path="/tmp/disk.vdi", 
+        controller=ControllerType.SATA, port=0, disk=0, wait=True):
         """Export a VirtualBox hard disk image
 
         By default, it will export the first disk on the sata controller, which 
-        is usually the boot device, in the default config of virtualbox
+        is usually the boot device, in the default config of virtualbox.
+        This operation will take some time
         """
 
         if not isinstance(controller, ControllerType):
@@ -430,7 +431,8 @@ class Vbox():
 
 
     @check_running
-    def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso" ,cdlabel="MyCD"):
+    def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso",
+            cdlabel="MyCD"):
         """Creates a iso-image based on directory and mounts it to the VM
 
         If the operating system inside the vm does no automounting, further 
@@ -439,7 +441,7 @@ class Vbox():
         Depends on mkisofs from genisoimage, should be installed by default on 
         ubuntu hosts
 
-        Arguments
+        Arguments:
             folder_path - path to the folder, which's content should be inside the 
                 image
             iso_path - path, where the iso image should be created
@@ -456,12 +458,16 @@ class Vbox():
 
         subprocess.check_output(["mkisofs"]+args)
 
-        self.mount_cd(path=iso_path,remove_image=True)
+        self.mount_cd(path=iso_path, remove_image=True)
 
 
     @check_running
     def mount_cd(self, path, remove_image=False):
         """mounts an iso image to the VM
+        
+        Arguments:
+            path - path to the iso image
+            remove_image - decides, if the image should be deleted on cleanup
         """
 
         self.medium = self.vb.open_medium(path, 
@@ -485,8 +491,8 @@ class Vbox():
     @check_running
     @check_guestsession
     def run_process(self, command, arguments=[], stdin='', key_input='',
-            environment=[], native_input=False,
-            timeout=0, wait_time=10, wait=True):
+            environment=[], native_input=False, timeout=0, wait_time=10, 
+            wait=True):
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
@@ -537,14 +543,16 @@ class Vbox():
                     self.keyboard_input(key_input=key_input)
 
             if wait:
-                process.wait_for(int(virtualbox.library.ProcessWaitForFlag.terminate), 10000)
+                process.wait_for(int(virtualbox.library.ProcessWaitForFlag.terminate), 
+                    10000)
 
             stdout = ""
             stderr = ""
 
 
         self.log.add_process(process, command ,arguments, stdin, key_input, 
-            stdout, stderr, process.pid, timeoffset=self.offset, timeRate=self.speedup)
+            stdout, stderr, process.pid, timeoffset=self.offset, 
+            timeRate=self.speedup)
 
         return stdout, stderr
 
@@ -569,7 +577,8 @@ class Vbox():
 
         progress = self.guestsession.copy_to(source, destination, [])
 
-        self.log.add_file(source=source, destination=dest, timeoffset=self.offset, timeRate=self.speedup)
+        self.log.add_file(source=source, destination=dest, 
+            timeoffset=self.offset, timeRate=self.speedup)
 
         if wait:
             progress.wait_for_completion()
@@ -599,7 +608,8 @@ class Vbox():
 
         self.session.console.keyboard.put_keys(key_input)
 
-        self.log.add_keyboard(key_input, timeoffset=self.offset, timeRate=self.speedup)
+        self.log.add_keyboard(key_input, timeoffset=self.offset, 
+            timeRate=self.speedup)
 
 
     @check_running

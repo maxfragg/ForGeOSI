@@ -185,7 +185,8 @@ class osWindows():
 
 
 
-    def open_browser(self, url="www.google.com", method=RunMethod.direct, timeout=20000):
+    def open_browser(self, url="www.google.com", method=RunMethod.direct, 
+            timeout=20000):
         """Opens a Internet Explorer with the given url
 
         Arguments:
