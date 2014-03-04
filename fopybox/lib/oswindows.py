@@ -10,6 +10,7 @@
 
 import base64
 import time
+from param import * #local import
 
 class osWindows():
     """Windows specific operations
@@ -61,6 +62,11 @@ class osWindows():
             i = i + 1
         return blank_command
 
+    def _check_path(self, path):
+        """check if path parameters contain a '-', since this causes problems in arguments
+        """
+        if '-' in path:
+            vb.log.add_warning('The path "'+path+'" contains a "-", this is know to cause problems')
 
     def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
@@ -115,6 +121,8 @@ class osWindows():
             destination - destination to copy to
             cmd - used cmd.exe or Powershell
         """
+        self._check_path(source)
+        self._check_path(destination)
 
         if cmd:
             self.run_shell_cmd(command=["copy",source,destination], cmd=True)
@@ -130,6 +138,9 @@ class osWindows():
             destination - destination to move to
             cmd - used cmd.exe or Powershell
         """
+        self._check_path(source)
+        self._check_path(destination)
+
         if cmd:
             self.run_shell_cmd(command=["move", source, destination], cmd=True)
         else:
@@ -164,6 +175,7 @@ class osWindows():
             url - url to download from
             path - full path, where the file should be saved
         """
+        self._check_path(path)
         
         command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,path)
 
@@ -172,35 +184,39 @@ class osWindows():
 
 
 
-    def open_browser(self, url="www.google.com", method="direct", timeout=20000):
+    def open_browser(self, url="www.google.com", method=RunMethod.direct, timeout=20000):
         """Opens a Internet Explorer with the given url
 
         Arguments:
             url - url of the website to open
             method - decide how to run the browser.
                 Valid options: 
-                    "direct" - VirtualBox-API
-                    "shell" - Windows Powershell
-                    "run" - Windows run dialog
-                    "start" - Startmenu
+                    RunMethod.direct - VirtualBox-API
+                    RunMethod.shell - Windows Powershell
+                    RunMethod.run - Windows run dialog
+                    RunMethod.start - Startmenu
                 Note: direct will block, until the browser is closed, if no 
                 timeout is set!
             timeout - in Milliseconds
         """
-        if method is "direct":
+
+        if not isinstance(method, RunMethod):
+            raise TypeError("method needs to be of type RunMethod")
+
+        if method is RunMethod.direct:
             self.vb.run_process(command=self.ie, arguments=[url], timeout=timeout)
 
-        elif method is "shell":
+        elif method is RunMethod.shell:
             command = '''$ie = new-object -com "InternetExplorer.Application";$ie.navigate("{0}");$ie.visible = $true'''.format(url)
 
             self.run_shell_cmd(command=command)
 
-        elif method is "run":
+        elif method is RunMethod.run:
             self.vb.keyboard_scancodes(['win','r'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
 
-        elif method is "start":
+        elif method is RunMethod.start:
             self.vb.keyboard_scancodes(['win'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')

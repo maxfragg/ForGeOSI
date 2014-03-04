@@ -5,6 +5,8 @@
 # [maximilian.krueger@fau.de]
 #
 
+from param import RunMethod #local import
+
 class osLinux():
     """Linux specific operations 
 
@@ -143,18 +145,20 @@ class osLinux():
             +str(port))
 
 
-    def open_browser(self, url="www.google.com", method="shell"):
+    def open_browser(self, url="www.google.com", method=RunMethod.shell):
         """Opens a firefox browser with the given url
 
         Arguments:
             method - decide how to run the browser, currently "direct" and 
                 "shell" are available 
         """
+        if not isinstance(method, RunMethod):
+            raise TypeError("method needs to be of type RunMethod")
 
-        if method == "direct":
+        if method is RunMethod.direct:
             self.vb.run_process(command="/usr/bin/firefox", 
                 arguments=["-new-tab",url], environment=self.env, wait=False)
-        elif method == "shell":
+        elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
 
 

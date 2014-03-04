@@ -221,6 +221,21 @@ class LogVM():
         return toXML(self, nodeName="vm")
 
 
+class LogWarning():
+    """Generic warnings, be careful, if any of those appear"""
+    def __init__(self, warning):
+        self.warning = warning
+
+    def get_entry(self):
+        return {'warning': self.warning}
+
+    def cleanup(self):
+        return False
+
+    def to_xml(self):
+        return toXML(self, nodeName="warning")
+
+
 class _LogInterface():
     """This is just an example, of the logging class interface
 
@@ -237,7 +252,7 @@ class _LogInterface():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="LogInterface")
+        return toXML(self, nodeName="log_interface")
         
 
 class Logger():
@@ -272,6 +287,9 @@ class Logger():
     def add_encodedCommand(self, *args, **kwargs):
         self.log.append(LogEncodedCommand(*args, **kwargs))
 
+    def add_warning(self, *args, **kwargs):
+        self.log.append(LogWarning(*args, **kwargs))
+
     def get_pid(self, path=''):
         """Find the PID of a previously started process based on the path
 
@@ -285,6 +303,12 @@ class Logger():
                     pids.append(l.pid)
         return pids
 
+    def get_warnings(self):
+        """Fast way to check for warnings
+        """
+        for l in self.log:
+            if isinstance(l, LogWarning):
+                print l.warning
 
     def get_log(self):
         for l in self.log:

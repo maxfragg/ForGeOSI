@@ -5,15 +5,15 @@
 # [maximilian.krueger@fau.de]
 #
 
-import virtualbox #pyvbox
+import virtualbox
 import os
 import subprocess
-import logger #local import
-import oslinux #local import
-import oswindows #local import
+from lib import logger #local import
+from lib import oslinux #local import
+from lib import oswindows #local import
+from lib.param import * #local import
 import shutil
 import time
-#needs python-decorator, needed for signature preserving decorators
 from decorator import decorator 
 
 __doc__ = """\
@@ -33,6 +33,10 @@ described in Vbox.os
 The VM host system needs to be a Linux system for some things, since it uses 
 genisoimage and relies on "/tmp/" being a valid path on the host.
 
+Dependencies:
+    fopybox
+    decorator
+    enum34
 """
 
 usertoken=""
@@ -137,7 +141,7 @@ class Vbox():
     """
     
     def __init__(self, basename="ubuntu-lts-base",
-            clonename="testvm", mode="clone", linkedName="Forensig20Linked",
+            clonename="testvm", mode=VboxMode.clone, linkedName="Forensig20Linked",
             wait=True):
         """Initialises a virtualbox instance
 
@@ -147,14 +151,17 @@ class Vbox():
 
         Arguments:
             basename - must be in VboxInfo.list_vms()
-            mode - must be "use" or "clone"
+            mode - must be VboxMode.use or VboxMode.clone
             wait - Setting wait to False enables async actions, but might break 
                 things, use with care!
         """
 
+        if not isinstance(mode, VboxMode):
+            raise TypeError("mode must be of type VboxMode")
+
         self.vb = virtualbox.VirtualBox()
 
-        if mode=="clone":
+        if mode == VboxMode.clone:
 
             _orig = self.vb.find_machine(basename)
             _orig_session = _orig.create_session()
@@ -180,7 +187,7 @@ class Vbox():
 
             self.vb.register_machine(self.vm)
             self.is_clone=True
-        elif mode=="use":
+        elif mode == VboxMode.use:
             self.vm = self.vb.find_machine(basename)
             self.osType = self.vm.os_type_id
 
@@ -194,20 +201,21 @@ class Vbox():
 
 
     @check_stopped  
-    def start(self, type="headless", wait=True):
+    def start(self, SessionType=SessionType.headless, wait=True):
         """start a machine
 
         Arguments:
-            type - "headless" means, the machine runs without any gui, the only 
-                sensible way on a remote server. This parameter is changeable to 
-                "gui" for debugging only
+            type - SessionType.headless means, the machine runs without any gui,
+                the only sensible way on a remote server. This parameter is 
+                changeable to SessionType.gui for debugging only
             wait - waits till the machine is initialized, it will not have 
                 finished booting yet. 
         """
 
         self.unlock()
 
-        self.progress = self.vm.launch_vm_process(self.session, type, '')
+        self.progress = self.vm.launch_vm_process(self.session, 
+            SessionType.name, '')
 
         self.running = True
 
@@ -276,18 +284,21 @@ class Vbox():
 
 
     @check_stopped
-    def export(self, path="/tmp/disk.vdi", wait=True, controller="SATA", port=0, 
-        disk=0):
+    def export(self, path="/tmp/disk.vdi", wait=True, 
+        controller=ControllerType.SATA, port=0, disk=0):
         """Export a VirtualBox hard disk image
 
         By default, it will export the first disk on the sata controller, which 
         is usually the boot device, in the default config of virtualbox
         """
 
+        if not isinstance(controller, ControllerType):
+            raise TypeError("controller must be of type ControllerType")
+
         self.lock()
 
         clone_hdd = self.vb.create_hard_disk("",path)
-        cur_hdd = self.session.machine.get_medium(controller,port,disk)
+        cur_hdd = self.session.machine.get_medium(controller.name,port,disk)
         #TODO: support vmdk_raw_disk as well?
         progress = cur_hdd.clone_to_base(clone_hdd,
             [virtualbox.library.MediumVariant.standard])
@@ -447,7 +458,8 @@ class Vbox():
         self.medium = self.vb.open_medium(path, 
             virtualbox.library.DeviceType.dvd, 
             virtualbox.library.AccessMode.read_only, False)
-        self.session.machine.mount_medium("IDE",1,0,self.medium,False)
+        self.session.machine.mount_medium(ControllerType.IDE.name,1,0,self.medium,
+            False)
 
         self.log.add_cd(path,remove_image)
 
@@ -456,7 +468,7 @@ class Vbox():
     def umount_cd(self):
         """Removes a cd from the emulated IDE CD-drive
         """
-        self.session.machine.mount_medium("IDE",1,0,
+        self.session.machine.mount_medium(ControllerType.IDE.name ,1,0,
             virtualbox.library.IMedium(),False)
         self.medium.close()
 
@@ -492,9 +504,6 @@ class Vbox():
                 is still running
         """
 
-        #since stdin is broken:
-        stdin=""
-
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command, 
             arguments=arguments, stdin=stdin, environment=environment, 
@@ -517,13 +526,14 @@ class Vbox():
                     self.keyboard_input(key_input=key_input)
 
             if wait:
-                process.wait_for(2, 10000) #virtualbox.library.ProcessWaitForFlag.terminate
+                process.wait_for(int(virtualbox.library.ProcessWaitForFlag.terminate), 10000)
 
             stdout = ""
             stderr = ""
 
 
-        self.log.add_process(process, command ,arguments, stdin, key_input, stdout, stderr, process.pid)
+        self.log.add_process(process, command ,arguments, stdin, key_input, 
+            stdout, stderr, process.pid)
 
         return stdout, stderr
 
@@ -567,9 +577,10 @@ class Vbox():
         else:
             return progress
 
+
     @check_running
     def keyboard_input(self, key_input):
-        """sends raw keypresses to the vm
+        """sends raw key-presses to the vm
 
         avoid this method, as result tends to be unreliable.
         Needs no Guest Additions
@@ -657,7 +668,7 @@ class Vbox():
 
     @check_running
     def add_to_nat_network(self, network_name="test_net", adapter=0):
-        """Adds the vm to a nat-network
+        """Adds the VM to a NAT-network
 
         This enables multiple virtual machines to see each other and exchange 
         data. The network has to be created first with 
