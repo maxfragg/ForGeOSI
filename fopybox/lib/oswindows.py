@@ -12,6 +12,7 @@ import base64
 import time
 from param import * #local import
 
+
 class osWindows():
     """Windows specific operations
 

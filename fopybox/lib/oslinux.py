@@ -7,6 +7,7 @@
 
 from param import RunMethod #local import
 
+
 class osLinux():
     """Linux specific operations 
 
@@ -160,6 +161,8 @@ class osLinux():
                 arguments=["-new-tab",url], environment=self.env, wait=False)
         elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
+        else:
+            self.vb.log.add_warning("RunMethod: "+method.name+" is not implemented on Linux")
 
 
     def uninstall_program(self, program):

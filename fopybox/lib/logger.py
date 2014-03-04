@@ -5,6 +5,8 @@
 # [maximilian.krueger@fau.de]
 #
 
+#python 2 compatibility
+from __future__ import print_function
 
 import time
 import shutil
@@ -308,11 +310,11 @@ class Logger():
         """
         for l in self.log:
             if isinstance(l, LogWarning):
-                print l.warning
+                print(l.warning)
 
     def get_log(self):
         for l in self.log:
-            print etree.tostring(l.to_xml(), pretty_print=True)
+            print(etree.tostring(l.to_xml(), pretty_print=True))
 
 
     def write_log(self, path):

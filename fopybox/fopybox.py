@@ -5,6 +5,9 @@
 # [maximilian.krueger@fau.de]
 #
 
+#python 2 compatibility
+from __future__ import print_function
+
 import virtualbox
 import os
 import subprocess
@@ -14,7 +17,8 @@ from lib import oswindows #local import
 from lib.param import * #local import
 import shutil
 import time
-from decorator import decorator 
+from decorator import decorator
+
 
 __doc__ = """\
 This library should simplify automating the control of virtual machines with
@@ -106,7 +110,7 @@ def check_running(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
     """
     if not args[0].running:
-        print "Machine needs to be running"
+        print("Machine needs to be running")
         return
     func(*args, **kwargs)
 
@@ -116,7 +120,7 @@ def check_stopped(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
     """
     if args[0].running:
-        print "Machine needs to be stopped"
+        print("Machine needs to be stopped")
         return
     func(*args, **kwargs)
 
@@ -126,7 +130,7 @@ def check_guestsession(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
     """
     if not args[0].guestsession:
-        print "needs guestsession"
+        print("needs guestsession")
         return
     func(*args, **kwargs)   
 
@@ -439,13 +443,13 @@ class Vbox():
 
         #basic sanity check
         if os.path.exists(folder_path) == False:
-            print "Error: Path does not exist"
+            print("Error: Path does not exist")
             return
 
         args = ["-J", "-l", "-R", "-V", cdlabel, "-iso-level", "4" ,"-o",
             iso_path, folder_path]
 
-        subprocess.call(["mkisofs"]+args)
+        subprocess.check_output(["mkisofs"]+args)
 
         self.mount_cd(path=iso_path,remove_image=True)
 
