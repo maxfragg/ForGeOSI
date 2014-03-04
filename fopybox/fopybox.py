@@ -199,6 +199,8 @@ class Vbox():
         self.guestsession = False
         self.basename = basename
         self.running = False
+        self.speedup = 100
+        self.offset = 0
 
         self.log = logger.Logger()
         self.log.add_vm(clonename, basename, self.osType)
@@ -209,9 +211,9 @@ class Vbox():
         """start a machine
 
         Arguments:
-            type - SessionType.headless means, the machine runs without any gui,
-                the only sensible way on a remote server. This parameter is 
-                changeable to SessionType.gui for debugging only
+            SessionType - SessionType.headless means, the machine runs without 
+                any gui, the only sensible way on a remote server. This 
+                parameter is changeable to SessionType.gui for debugging only
             wait - waits till the machine is initialized, it will not have 
                 finished booting yet. 
         """
@@ -348,7 +350,7 @@ class Vbox():
 
 
     @check_running
-    def time_offset(self,offset=0):
+    def set_time_offset(self, offset=0):
         """Sets a time offset in seconds
         Default resets.
 
@@ -357,10 +359,11 @@ class Vbox():
         """
 
         self.session.machine.bios_settings.time_offset = offset * 1000
+        self.offset = offset * 1000
 
 
     @check_running
-    def time_speedup(self,speedup=100):
+    def set_time_speedup(self, speedup=100):
         """Sets relative speed time runs in the vm
 
         The speedup is set in percent, valid values go from 2 to 20000 percent.
@@ -371,6 +374,7 @@ class Vbox():
         """
 
         self.session.console.debugger.virtual_time_rate = speedup
+        self.speedup = speedup
 
 
     @check_running
@@ -412,7 +416,8 @@ class Vbox():
         self.username = username
         self.password = password
 
-        self.guestsession = self.session.console.guest.create_session(self.username,self.password)
+        self.guestsession = self.session.console.guest.create_session(self.username,
+            self.password)
 
         #use vm property to find systemtype
         #we create the self.os at this point, because it needs a running guest
@@ -465,7 +470,7 @@ class Vbox():
         self.session.machine.mount_medium(ControllerType.IDE.name,1,0,self.medium,
             False)
 
-        self.log.add_cd(path,remove_image)
+        self.log.add_cd(path,remove_image, timeoffset=self.offset, timeRate=self.speedup)
 
 
     @check_running
@@ -491,7 +496,7 @@ class Vbox():
             arguments - arguments passed to the binary, passed as an array of 
                 single arguments
             stdin - this is send to the stdin of the 
-                process after its creation
+                process after its creation, NOT WORKING!
             key_input - this is send to the process as keyboard input
             environment - user environment for the program, important on linux, 
                 because otherwise user processes have the environment of root
@@ -507,6 +512,8 @@ class Vbox():
                 or if this function will return, while the process inside the VM
                 is still running
         """
+
+        stdin="" #stdin input is broken in pyvbox!
 
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command, 
@@ -537,7 +544,7 @@ class Vbox():
 
 
         self.log.add_process(process, command ,arguments, stdin, key_input, 
-            stdout, stderr, process.pid)
+            stdout, stderr, process.pid, timeoffset=self.offset, timeRate=self.speedup)
 
         return stdout, stderr
 
@@ -562,7 +569,7 @@ class Vbox():
 
         progress = self.guestsession.copy_to(source, destination, [])
 
-        self.log.add_file(source=source, destination=dest)
+        self.log.add_file(source=source, destination=dest, timeoffset=self.offset, timeRate=self.speedup)
 
         if wait:
             progress.wait_for_completion()
@@ -592,7 +599,7 @@ class Vbox():
 
         self.session.console.keyboard.put_keys(key_input)
 
-        self.log.add_keyboard(key_input)
+        self.log.add_keyboard(key_input, timeoffset=self.offset, timeRate=self.speedup)
 
 
     @check_running
@@ -634,7 +641,8 @@ class Vbox():
                     #the api only likes baseintegers, but hex codes are, what everybody
                     #uses for make/break codes
                     self.session.console.keyboard.put_scancodes([int(x) for x in make_codes[s]])
-                    self.log.add_keyboard("makecode: "+str(s))
+                    self.log.add_keyboard("makecode: "+str(s), 
+                        timeoffset=self.offset, timeRate=self.speedup)
                 else:
                     #if its not in the list, assume, that it is a normal char/num
                     self.keyboard_input(s)
@@ -643,7 +651,8 @@ class Vbox():
             for s in scancode:
                 if s in break_codes:
                     self.session.console.keyboard.put_scancodes([int(x) for x in break_codes[s]])
-                    self.log.add_keyboard("breakcode: "+str(s))
+                    self.log.add_keyboard("breakcode: "+str(s), 
+                        timeoffset=self.offset, timeRate=self.speedup)
 
 
     @check_running
@@ -667,7 +676,8 @@ class Vbox():
         if release:
             self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
 
-        self.log.add_mouse(x, y, lmb, mmb, rmb)
+        self.log.add_mouse(x, y, lmb, mmb, rmb, timeoffset=self.offset, 
+            timeRate=self.speedup)
 
 
     @check_running

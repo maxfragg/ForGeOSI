@@ -6,6 +6,7 @@
 #
 
 from param import RunMethod #local import
+import time
 
 
 class osLinux():
@@ -20,22 +21,27 @@ class osLinux():
     def __init__(self, vb, term="/usr/bin/xterm", env=[], xdotool_extended=False):
         self.vb = vb
         self.term = term
+        self.shell = "/bin/bash"
         self.env = ["DISPLAY=:0", "USER="+vb.username, 
             "HOME=/home/"+vb.username] + env
         self.xdt = "/usr/bin/xdotool"
         self.xdte = xdotool_extended
 
 
-    def run_shell_cmd(self, command, close_shell=True):
+    def run_shell_cmd(self, command, gui=False ,close_shell=True):
         """runs a command inside the default shell of the user
         """
-        if close_shell:
-            cmd = command + "\n  exit\n"
-        else:
-            cmd = command + "\n"
+        if gui:
+            if close_shell:
+                cmd = command + "\n  exit\n"
+            else:
+                cmd = command + "\n"
 
-        self.vb.run_process(command=self.term, key_input=cmd, 
-            environment=self.env, native_input=True, wait=True)
+            self.vb.run_process(command=self.term, key_input=cmd, 
+                environment=self.env, native_input=True, wait=True)
+        else:
+            self.vb.run_process(command=self.shell, arguments=['-c',cmd],
+                environment=self.env, wait=True)
 
 
     def _build_xdotool_args(self, window_class, name, pid):
@@ -67,7 +73,10 @@ class osLinux():
         """Sends keyboard input to a running gui process.
 
         Arguments
-            input - String of characters to be send to the process
+            input - String of characters to be send to the process, magic for 
+                sleeping during input, put a 'sleep_hack\n' in the string to 
+                sleep at this position, for example to wait for sudo to ask for 
+                a password
             window_class - X-property, usually matching the program name, which 
                 can be used to find program. Will be ignored if empty
             name - X-property, might work better than window_class for some 
@@ -77,16 +86,21 @@ class osLinux():
         """
 
         #type will simulate typing and interpret space '\n'
-        args = self._build_xdotool_args(window_class, name, pid) + ["type"] 
+        args = self._build_xdotool_args(window_class, name, pid) + ["type --delay 30"] 
         
-        n = 30 #choose a sane number here, how many keys to send at once
+        #n = 30 #choose a sane number here, how many keys to send at once
+        #key_input_split = [key_input[i:i+n] for i in range(0, len(key_input), n)]
 
-        key_input_split = [key_input[i:i+n] for i in range(0, len(key_input), n)]
+        key_input_split = str.splitlines(key_input)
 
         for part in key_input_split:
+            if part is "sleep_hack":
+                time.sleep(10)
+            else:
+                #reinsert '\n' since we lost that with the splitlines
+                self.vb.run_process(command=self.xdt,arguments=args+[part+'\n'], 
+                    environment=self.env)
 
-            self.vb.run_process(command=self.xdt,arguments=args+[part], 
-                environment=self.env)
 
 
     def keyboard_specialkey(self, key, window_class='', name='', pid=0):
@@ -111,19 +125,39 @@ class osLinux():
 
 
     def copy_file(self, source, destination):
-        
+        """Copy file within the guest
+
+        Arguments:
+            source - source path
+            destination - destination path
+        """
         self.run_shell_cmd("cp "+source+" "+destination)
 
 
     def move_file(self, source, destination):
-        
+        """Move file within the guest
+
+        Arguments:
+            source - source path
+            destination - destination path
+        """
         self.run_shell_cmd("mv "+source+" "+destination)
 
+    def make_dir(self, path):
+        """Creates a directory on the guest
+
+        Arguments:
+            path - path to the directory, missing parent-directories will be 
+                created as well
+        """
+        self.run_shell_cmd("mkdir -p "+path)
 
     def create_user(self, username, password, rootpassword):
-        
-        self.run_shell_cmd("sudo adduser --group --shell /bin/bash "+username+
-        	"\n"+rootpassword+"\nsudo passwd "+username+"\n"+password+"\n")
+        """Creates a new user in the VM
+        """
+        self.run_shell_cmd("sudo useradd "+username+
+        	"\n"+rootpassword+"\nsudo passwd "+username+"\nsleep_hack\n"
+            +password+"\nsleep_hack\n"+password+"\n")
 
 
     def download_file(self, url, destination):
@@ -169,7 +203,7 @@ class osLinux():
         """remove a program from the guest system with apt-get
 
         """
-        cmd="sudo apt-get remove {0}\n{1}\n".format(program, self.vb.password)
+        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program, self.vb.password)
         self.run_shell_cmd(command=cmd)
 
 
