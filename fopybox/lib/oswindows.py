@@ -228,6 +228,10 @@ class osWindows():
     def kill_process(self, name='', pid=0):
         """kills the application based on name or pid
         one parameter needs to be given
+
+        Arguments:
+            name - name of the program
+            pid - process id
         """
 
         assert(name or pid)
@@ -245,6 +249,9 @@ class osWindows():
         """remove a program from the guest system
 
         This only works for progams using msi-based installers
+
+        Arguments:
+            program - name of the program, as shown in "Installed Software"
         """
         command = '''$app = Get-WmiObject -Class Win32_Product `
                      -Filter "Name = '{0}'"
@@ -255,7 +262,7 @@ class osWindows():
 
 
 
-    def uninstall_guest_additions(self, version="4.3.6"):
+    def uninstall_guest_additions(self, version="4.3.8"):
         """remove the guest additions
 
         Warning: This can not be undone, since remote running of software is 

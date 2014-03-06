@@ -16,6 +16,10 @@ class osLinux():
     features, that depend on the opertation system, running in the VM.
     some functions require additional software:
         xdotool
+
+    Known limitations:
+        xdotool_extended=True only works, if the the windowmanager confirms X11
+        specifications, which Unity in Ubuntu 12.04 does not.
     """
 
     def __init__(self, vb, term="/usr/bin/xterm", env=[], xdotool_extended=False):
@@ -30,6 +34,12 @@ class osLinux():
 
     def run_shell_cmd(self, command, gui=False ,close_shell=True):
         """runs a command inside the default shell of the user
+
+        Arguments:
+            gui - decides if a x-terminal should be created, or the scripts 
+                should run in a naked bash without terminal emulator
+            close_shell - if a x-terminal is created, this is needed to make the
+                window close again 
         """
         if gui:
             if close_shell:
@@ -161,7 +171,12 @@ class osLinux():
 
 
     def download_file(self, url, destination):
+        """Download file using wget
 
+        Arguments:
+            url - url to download from
+            destination - path where the file should be saved
+        """
         self.run_shell_cmd("wget -O "+destination+" "+url)
 
 
