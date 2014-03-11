@@ -317,6 +317,13 @@ class Vbox():
         else:
             return progress
 
+    @check_running
+    def dump_memory(self, path="/tmp/dump.elf"):
+        """Creates a memory dump in 64bit elf format
+
+        Enables anaysis of non persistent data
+        """
+        #dumpguestcore
 
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
