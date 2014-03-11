@@ -317,12 +317,27 @@ class Logger():
         return warn
 
 
-    def get_log(self):
+    def get_xml_log(self):
+        """Returns XML representation of the log
+        """
         for l in self.log:
             print(etree.tostring(l.to_xml(), pretty_print=True))
 
+    def get_pretty_log(self):
+        """Returns human readable log
+        """
+        ret=""
+        for l in self.log:
+            ret+=l.__class__.__name__+":\n"
+            entry = l.get_entry()
+            for key in entry:
+                ret+="\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
+        return ret
+
 
     def write_log(self, path):
+        """Writes the xml formated log to a file
+        """
         f = open(path, 'wb')
         for l in self.log:
             f.write(etree.tostring(l.to_xml(), pretty_print=True))
@@ -331,6 +346,7 @@ class Logger():
     def cleanup(self):
         """Gets one path, to clean up at a time
 
+        Call sequencial untill it returns false to clear the full log
         This destroys the log, so use get_log or write_log first!
         """
         if not self.log:

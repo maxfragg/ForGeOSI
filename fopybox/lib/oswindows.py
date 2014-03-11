@@ -29,9 +29,11 @@ class osWindows():
     """
 
     def __init__(self,vb,
-            term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
+            term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            home="C:\\Users\\default.windows-8-base\\"):
         self.vb = vb
         self.term = term
+        self.home = home
         self.cmd = "C:\\Windows\\System32\\cmd.exe"
         self.ie = "C:\\Program Files (x86)\\Internet Explorer\iexplore.exe"
 

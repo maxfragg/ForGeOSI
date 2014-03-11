@@ -22,9 +22,11 @@ class osLinux():
         specifications, which Unity in Ubuntu 12.04 does not.
     """
 
-    def __init__(self, vb, term="/usr/bin/xterm", env=[], xdotool_extended=False):
+    def __init__(self, vb, term="/usr/bin/xterm", home="/home/default/",
+            env=[], xdotool_extended=False):
         self.vb = vb
         self.term = term
+        self.home = home
         self.shell = "/bin/bash"
         self.env = ["DISPLAY=:0", "USER="+vb.username, 
             "HOME=/home/"+vb.username] + env
