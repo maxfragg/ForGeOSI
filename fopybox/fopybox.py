@@ -291,7 +291,7 @@ class Vbox():
 
     @check_stopped
     def export(self, path="/tmp/disk.vdi", 
-        controller=ControllerType.SATA, port=0, disk=0, wait=True):
+        controller=ControllerType.SATA, port=0, disk=0, raw=True, wait=True):
         """Export a VirtualBox hard disk image
 
         By default, it will export the first disk on the sata controller, which 
@@ -306,9 +306,14 @@ class Vbox():
 
         clone_hdd = self.vb.create_hard_disk("",path)
         cur_hdd = self.session.machine.get_medium(controller.name,port,disk)
-        #TODO: support vmdk_raw_disk as well?
+        
+        if raw:
+            variant = virtualbox.library.MediumVariant.VmdkRawDisk      
+        else:
+            variant = virtualbox.library.MediumVariant.standard
+
         progress = cur_hdd.clone_to_base(clone_hdd,
-            [virtualbox.library.MediumVariant.standard])
+            [variant])
 
         if wait:
             progress.wait_for_completion()
@@ -323,7 +328,7 @@ class Vbox():
 
         Enables anaysis of non persistent data
         """
-        #dumpguestcore
+        self.session.console.debugger.dump_guest_core(path, "")
 
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
