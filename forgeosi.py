@@ -625,7 +625,7 @@ class Vbox():
 
 
     @check_running
-    def keyboard_scancodes(self, scancode=[], make_code=True, break_code=True):
+    def keyboard_combination(self, keys=[], make_code=True, break_code=True):
         """sends scancodes to the vm
 
         avoid this method, as result tends to be unreliable

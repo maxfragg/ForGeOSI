@@ -216,12 +216,12 @@ class osWindows():
             self.run_shell_cmd(command=command)
 
         elif method is RunMethod.run:
-            self.vb.keyboard_scancodes(['win','r'])
+            self.vb.keyboard_combination(['win','r'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
 
         elif method is RunMethod.start:
-            self.vb.keyboard_scancodes(['win'])
+            self.vb.keyboard_combination(['win'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
 

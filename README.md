@@ -31,6 +31,36 @@ In [4]: vbox.start(session_type=fopybox.SessionType.gui)
 In [5]: vbox.stop()
 ```
 
+Generate input, open webbrowser, send keyboard shortcut
+
+```
+In [1]: import fopybox
+
+In [2]: vbox = fopybox.Vbox(mode=fopybox.Vbox, basename='ubuntu-lts-base')
+
+In [3]: vbox.start(session_type=fopybox.SessionType.gui)
+#top secret password
+In [4]: vbox.keyboard_input("12345\n")
+#needed to access os-specific and
+In [5]: vbox.create_guest_session()
+
+In [6]: vbox.os.open_browser("github.com")
+
+In [7] vbox.keyboard_combination(['alt','f4'])
+
+In [8]: vbox.stop()
+
+```
+
+Export virtual machine
+```
+In [1]: import fopybox
+
+In [2]: vbox = fopybox.Vbox(mode=fopybox.Vbox, basename='ubuntu-lts-base')
+
+In [3]: vbox.export(path='/tmp/image.vdi')
+```
+
 ##Hacking
 The basic architecture:
 * _fopybox.py_
@@ -52,7 +82,7 @@ The basic architecture:
 Feel free to extend, i will accept pull requests on a resonable base.
 
 ###Issues
-Please report issues on github
+Please report issues on [github](https://github.com/maxfragg/ForgeOSI/issues)
 
 ###Known bugs and limitations
 * Python 3 compability needs to be fixed
