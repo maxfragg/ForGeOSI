@@ -1,8 +1,6 @@
 ForGeOSI
 --------
 
-[project logo][docs/logo.png]
-
 __ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and resonable abstraction.
 The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
 
@@ -18,7 +16,7 @@ The Guest systems should be prepared with Guest Additions installed, further hin
 ##First Steps
 Lets start a virtual machine, without cloning it
 
-```
+```python
 >ipython
 In [1]: import forgeosi
 
@@ -36,7 +34,7 @@ In [5]: vbox.stop()
 
 Generate input, open webbrowser, send keyboard shortcut
 
-```
+```python
 In [1]: import forgeosi
 
 In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
@@ -56,7 +54,7 @@ In [8]: vbox.stop()
 ```
 
 Export virtual machine
-```
+```python
 In [1]: import forgeosi
 
 In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
