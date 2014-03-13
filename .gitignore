@@ -2,4 +2,5 @@
 *.pyc
 dist
 MANIFEST
-docs
+docs/html
+docs/latex
