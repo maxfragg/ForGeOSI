@@ -46,7 +46,7 @@ In [5]: vbox.create_guest_session()
 
 In [6]: vbox.os.open_browser("github.com")
 
-In [7] vbox.keyboard_combination(['alt','f4'])
+In [7]: vbox.keyboard_combination(['alt','f4'])
 
 In [8]: vbox.stop()
 
