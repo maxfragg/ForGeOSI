@@ -1,1 +1,1 @@
-__all__ = ["forgeosi"]
+__all__ = ["forgeosi","lib/*.py"]
