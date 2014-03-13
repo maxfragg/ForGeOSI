@@ -10,23 +10,23 @@ Further more, the following Python packets are required:
 * decorator
 * enum34
 
-The Guest systems should be prepared with Guest Additions installed, further hints are given in the docstring documentation, standalone documentation can be generated with `pydoc fopybox.py`
+The Guest systems should be prepared with Guest Additions installed, further hints are given in the docstring documentation, standalone documentation can be generated with `pydoc forgeosi.py`
 
 ##First Steps
 Lets start a virtual machine, without cloning it
 
 ```
 >ipython
-In [1]: import fopybox
+In [1]: import forgeosi
 
-In [2]: print fopybox.VboxInfo().list_vms()
+In [2]: print forgeosi.VboxInfo().list_vms()
 ubuntu-lts-base
 xubuntu-lts-base
 windows-8-base
 
-In [3]: vbox = fopybox.Vbox(mode=fopybox.Vbox, basename='ubuntu-lts-base')
+In [3]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
 
-In [4]: vbox.start(session_type=fopybox.SessionType.gui)
+In [4]: vbox.start(session_type=forgeosi.SessionType.gui)
 
 In [5]: vbox.stop()
 ```
@@ -34,11 +34,11 @@ In [5]: vbox.stop()
 Generate input, open webbrowser, send keyboard shortcut
 
 ```
-In [1]: import fopybox
+In [1]: import forgeosi
 
-In [2]: vbox = fopybox.Vbox(mode=fopybox.Vbox, basename='ubuntu-lts-base')
+In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
 
-In [3]: vbox.start(session_type=fopybox.SessionType.gui)
+In [3]: vbox.start(session_type=forgeosi.SessionType.gui)
 #top secret password
 In [4]: vbox.keyboard_input("12345\n")
 #needed to access os-specific and
@@ -54,16 +54,16 @@ In [8]: vbox.stop()
 
 Export virtual machine
 ```
-In [1]: import fopybox
+In [1]: import forgeosi
 
-In [2]: vbox = fopybox.Vbox(mode=fopybox.Vbox, basename='ubuntu-lts-base')
+In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
 
 In [3]: vbox.export(path='/tmp/image.vdi')
 ```
 
 ##Hacking
 The basic architecture:
-* _fopybox.py_
+* _forgeosi.py_
 	* _VboxInfo_
 	  Helper to get info about the VirtualBox instance
 	* _VboxConfig_
