@@ -1,6 +1,7 @@
-#ForGeOSI
+ForGeOSI
+--------
 
-ForGeOSI is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and resonable abstraction.
+__ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and resonable abstraction.
 The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
 
 ##Requirements
@@ -84,7 +85,11 @@ Feel free to extend, i will accept pull requests on a resonable base.
 ###Issues
 Please report issues on [github](https://github.com/maxfragg/ForgeOSI/issues)
 
+###Documentation
+Documentation can be found in __docs/__ after building with `doxygen doxygen.conf`
+
+
 ###Known bugs and limitations
-* Python 3 compability needs to be fixed
+* Python 3 compability needs to be tested
 * Running programs in Windows guests with '-' in arguments, breaks things, be careful with that.
 * Windows 
