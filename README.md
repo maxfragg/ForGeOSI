@@ -1,6 +1,6 @@
 ForGeOSI
 --------
-![Image](docs/logo256.png?raw=true)
+![Image](http://max.fauiwg.de/forgeosi/logo256.png?raw=true)
 
 __ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and resonable abstraction.
 The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
@@ -42,11 +42,11 @@ In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
 
 In [3]: vbox.start(session_type=forgeosi.SessionType.gui)
 #top secret password
-In [4]: vbox.keyboard_input("12345\n")
+In [4]: vbox.keyboard_input('12345\n')
 #needed to access os-specific and
 In [5]: vbox.create_guest_session()
 
-In [6]: vbox.os.open_browser("github.com")
+In [6]: vbox.os.open_browser('github.com')
 
 In [7]: vbox.keyboard_combination(['alt','f4'])
 
@@ -87,7 +87,7 @@ Feel free to extend, i will accept pull requests on a resonable base.
 Please report issues on [github](https://github.com/maxfragg/ForgeOSI/issues)
 
 ###Documentation
-Documentation can be found in __docs/__ after building with `doxygen doxygen.conf`
+Documentation can be found in __docs/__ after building with `doxygen doxygen.conf` or accessed [here](http://max.fauiwg.de/forgeosi/index.html)
 
 
 ###Known bugs and limitations
