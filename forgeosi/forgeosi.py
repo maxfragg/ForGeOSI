@@ -145,7 +145,7 @@ class Vbox():
     """
     
     def __init__(self, basename="ubuntu-lts-base",
-            clonename="testvm", mode=VboxMode.clone, linkedName="Forensig20Linked",
+            clonename="testvm", mode=VboxMode.clone, linked_name="Forensig20Linked",
             wait=True):
         """Initialises a virtualbox instance
 
@@ -173,13 +173,13 @@ class Vbox():
             self.vm = self.vb.create_machine("",clonename,[], _orig.os_type_id,"")
 
             try:
-                _snap = _orig.find_snapshot(linkedName)
+                _snap = _orig.find_snapshot(linked_name)
             except:
                 #_orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
 
-                self.progress = _orig_session.console.take_snapshot(linkedName, "")
+                self.progress = _orig_session.console.take_snapshot(linked_name, "")
                 self.progress.wait_for_completion()
-                _snap = _orig.find_snapshot(linkedName)
+                _snap = _orig.find_snapshot(linked_name)
                 #_orig_session.unlock_machine()    
 
             self.progress =  _snap.machine.clone_to(
@@ -207,11 +207,11 @@ class Vbox():
 
 
     @check_stopped  
-    def start(self, SessionType=SessionType.headless, wait=True):
+    def start(self, session_type=SessionType.headless, wait=True):
         """start a machine
 
         Arguments:
-            SessionType - SessionType.headless means, the machine runs without 
+            session_type - SessionType.headless means, the machine runs without 
                 any gui, the only sensible way on a remote server. This 
                 parameter is changeable to SessionType.gui for debugging only
             wait - waits till the machine is initialized, it will not have 
@@ -221,7 +221,7 @@ class Vbox():
         self.unlock()
 
         self.progress = self.vm.launch_vm_process(self.session, 
-            SessionType.name, '')
+            session_type.name, '')
 
         self.running = True
 
@@ -488,7 +488,7 @@ class Vbox():
         self.session.machine.mount_medium(ControllerType.IDE.name,1,0,self.medium,
             False)
 
-        self.log.add_cd(path,remove_image, timeoffset=self.offset, timeRate=self.speedup)
+        self.log.add_cd(path,remove_image, time_offset=self.offset, time_rate=self.speedup)
 
 
     @check_running
@@ -563,8 +563,8 @@ class Vbox():
 
 
         self.log.add_process(process, command ,arguments, stdin, key_input, 
-            stdout, stderr, process.pid, timeoffset=self.offset, 
-            timeRate=self.speedup)
+            stdout, stderr, process.pid, time_offset=self.offset, 
+            time_rate=self.speedup)
 
         return stdout, stderr
 
@@ -590,7 +590,7 @@ class Vbox():
         progress = self.guestsession.copy_to(source, destination, [])
 
         self.log.add_file(source=source, destination=dest, 
-            timeoffset=self.offset, timeRate=self.speedup)
+            time_offset=self.offset, time_rate=self.speedup)
 
         if wait:
             progress.wait_for_completion()
@@ -620,8 +620,8 @@ class Vbox():
 
         self.session.console.keyboard.put_keys(key_input)
 
-        self.log.add_keyboard(key_input, timeoffset=self.offset, 
-            timeRate=self.speedup)
+        self.log.add_keyboard(key_input, time_offset=self.offset, 
+            time_rate=self.speedup)
 
 
     @check_running
@@ -658,23 +658,23 @@ class Vbox():
             'f10': [0xC4], 'f11': [0xD7], 'f12': [0xD8]}
 
         if make_code:
-            for s in scancode:
+            for s in keys:
                 if s in make_codes:
                     #the api only likes baseintegers, but hex codes are, what everybody
                     #uses for make/break codes
                     self.session.console.keyboard.put_scancodes([int(x) for x in make_codes[s]])
                     self.log.add_keyboard("makecode: "+str(s), 
-                        timeoffset=self.offset, timeRate=self.speedup)
+                        time_offset=self.offset, time_rate=self.speedup)
                 else:
                     #if its not in the list, assume, that it is a normal char/num
                     self.keyboard_input(s)
 
         if break_code:
-            for s in scancode:
+            for s in keys:
                 if s in break_codes:
                     self.session.console.keyboard.put_scancodes([int(x) for x in break_codes[s]])
                     self.log.add_keyboard("breakcode: "+str(s), 
-                        timeoffset=self.offset, timeRate=self.speedup)
+                        time_offset=self.offset, time_rate=self.speedup)
 
 
     @check_running
@@ -698,8 +698,8 @@ class Vbox():
         if release:
             self.session.console.mouse.put_mouse_event_absolute(x,y,0,0,0)
 
-        self.log.add_mouse(x, y, lmb, mmb, rmb, timeoffset=self.offset, 
-            timeRate=self.speedup)
+        self.log.add_mouse(x, y, lmb, mmb, rmb, time_offset=self.offset, 
+            time_rate=self.speedup)
 
 
     @check_running

@@ -5,7 +5,7 @@
 # [maximilian.krueger@fau.de]
 #
 
-from param import RunMethod #local import
+from lib.param import RunMethod #local import
 import time
 
 
@@ -34,7 +34,7 @@ class osLinux():
         self.xdte = xdotool_extended
 
 
-    def run_shell_cmd(self, command, gui=False ,close_shell=True):
+    def run_shell_cmd(self, command, gui=False ,close_shell=False):
         """runs a command inside the default shell of the user
 
         Arguments:
@@ -47,30 +47,30 @@ class osLinux():
             if close_shell:
                 cmd = command + "\n  exit\n"
             else:
-                cmd = command + "\n"
+                cmd = command + "&\n"
 
             self.vb.run_process(command=self.term, key_input=cmd, 
                 environment=self.env, native_input=True, wait=True)
         else:
-            self.vb.run_process(command=self.shell, arguments=['-c',cmd],
+            self.vb.run_process(command=self.shell, arguments=['-c',command],
                 environment=self.env, wait=True)
 
 
     def _build_xdotool_args(self, window_class, name, pid):
-    	"""helper to get the arguments for xdotool
+        """helper to get the arguments for xdotool
 
-    	note that none of the options are really reliable, since they all depend
-    	on the windows having the correct fields set
-    	Additional, Unity in Ubuntu 12.04 is not working properly with xdotool
-    	"""
-    	args = []
+        note that none of the options are really reliable, since they all depend
+        on the windows having the correct fields set
+        Additional, Unity in Ubuntu 12.04 is not working properly with xdotool
+        """
+        args = []
 
-    	#turn this function into a noop if we do not want to use it (like on unity)
-    	if not self.xdte:
-    		return args
+        #turn this function into a noop if we do not want to use it (like on unity)
+        if not self.xdte:
+            return args
 
         if window_class or name or pid:
-        	#sync makes it hang, until a window is found with the propery
+            #sync makes it hang, until a window is found with the propery
             args = ["search", "--sync"]
         if window_class:
             args = args + ["--class", window_class]
@@ -98,12 +98,11 @@ class osLinux():
         """
 
         #type will simulate typing and interpret space '\n'
-        args = self._build_xdotool_args(window_class, name, pid) + ["type --delay 30"] 
+        args = self._build_xdotool_args(window_class, name, pid) + ["type","--delay","30"] 
         
-        #n = 30 #choose a sane number here, how many keys to send at once
-        #key_input_split = [key_input[i:i+n] for i in range(0, len(key_input), n)]
 
-        key_input_split = str.splitlines(key_input)
+        #send input line by line, to prevent to long argument
+        key_input_split = str.splitlines(str(key_input))
 
         for part in key_input_split:
             if part is "sleep_hack":
@@ -168,7 +167,7 @@ class osLinux():
         """Creates a new user in the VM
         """
         self.run_shell_cmd("sudo useradd "+username+
-        	"\n"+rootpassword+"\nsudo passwd "+username+"\nsleep_hack\n"
+            "\n"+rootpassword+"\nsudo passwd "+username+"\nsleep_hack\n"
             +password+"\nsleep_hack\n"+password+"\n")
 
 

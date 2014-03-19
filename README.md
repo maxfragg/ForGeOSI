@@ -6,11 +6,13 @@ __ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), desig
 The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
 
 ##Requirements
-As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theorie should support Python 3 as well, pyvbox has some hickups, so it is not advised.
+As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theorie should support Python 3 as well, vboxapi has some hickups, so it is not advised.
 Further more, the following Python packets are required:
 * pyvbox
 * decorator
 * enum34
+* lxml
+
 
 The Guest systems should be prepared with Guest Additions installed, further hints are given in the docstring documentation, standalone documentation can be generated with `pydoc forgeosi.py`
 
@@ -26,19 +28,19 @@ ubuntu-lts-base
 xubuntu-lts-base
 windows-8-base
 
-In [3]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
+In [3]: vbox = forgeosi.Vbox(mode=forgeosi.VboxMode.use, basename='ubuntu-lts-base')
 
 In [4]: vbox.start(session_type=forgeosi.SessionType.gui)
 
 In [5]: vbox.stop()
 ```
 
-Generate input, open webbrowser, send keyboard shortcut
+Generate input, open webbrowser, send keyboard shortcut, get log
 
 ```python
 In [1]: import forgeosi
 
-In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
+In [2]: vbox = forgeosi.Vbox(mode=forgeosi.VboxMode.use, basename='ubuntu-lts-base')
 
 In [3]: vbox.start(session_type=forgeosi.SessionType.gui)
 #top secret password
@@ -52,13 +54,62 @@ In [7]: vbox.keyboard_combination(['alt','f4'])
 
 In [8]: vbox.stop()
 
+In [9]: print vbox.log.get_pretty_log()
+LogVM:
+	osType: Ubuntu_64
+	basename: ubuntu-lts-base
+	vmname: testvm
+LogRawKeyboard:
+	time_rate: 100
+	keyboard input: 12345\n
+	up_time: 0
+	time: 1395224126.58
+	real_time: 1395224126.58
+LogProcess:
+	up_time: 0
+	stdout: 
+	process: <virtualbox.library.IGuestProcess object at 0x2a95d90>
+	time_rate: 100
+	pid: 1843
+	key_input: 
+	path: /bin/bash
+	stdin: 
+	arguments: [\'-c\', \'/usr/bin/firefox -new-tab github.com\']
+	stderr: 
+	time: 1395224228.1
+	real_time: 1395224228.1
+LogRawKeyboard:
+	time_rate: 100
+	keyboard input: makecode: alt
+	up_time: 0
+	time: 1395224237.56
+	real_time: 1395224237.56
+LogRawKeyboard:
+	time_rate: 100
+	keyboard input: makecode: f4
+	up_time: 0
+	time: 1395224237.56
+	real_time: 1395224237.56
+LogRawKeyboard:
+	time_rate: 100
+	keyboard input: breakcode: alt
+	up_time: 0
+	time: 1395224237.56
+	real_time: 1395224237.56
+LogRawKeyboard:
+	time_rate: 100
+	keyboard input: breakcode: f4
+	up_time: 0
+	time: 1395224237.56
+	real_time: 1395224237.56
+
 ```
 
 Export virtual machine
 ```python
 In [1]: import forgeosi
 
-In [2]: vbox = forgeosi.Vbox(mode=forgeosi.Vbox, basename='ubuntu-lts-base')
+In [2]: vbox = forgeosi.Vbox(mode=forgeosi.VboxMode.us, basename='ubuntu-lts-base')
 
 In [3]: vbox.export(path='/tmp/image.vdi')
 ```
@@ -93,4 +144,4 @@ Documentation can be found in __docs/__ after building with `doxygen doxygen.con
 ###Known bugs and limitations
 * Python 3 compability needs to be tested
 * Running programs in Windows guests with '-' in arguments, breaks things, be careful with that.
-* Windows 
+* limited support for Windows hosts

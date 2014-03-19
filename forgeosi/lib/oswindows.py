@@ -10,7 +10,7 @@
 
 import base64
 import time
-from param import * #local import
+from lib.param import * #local import
 
 
 class osWindows():
@@ -29,7 +29,7 @@ class osWindows():
     """
 
     def __init__(self,vb,
-            term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             home="C:\\Users\\default.windows-8-base\\"):
         self.vb = vb
         self.term = term

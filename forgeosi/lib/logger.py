@@ -41,17 +41,17 @@ def toXML(classElement, **kwargs):
 class LogCopiedFile():
     """Stores data of a single file, copied to the VM
     """
-    def __init__(self, source, destination, timeoffset=0, timeRate=100, upTime=0):
+    def __init__(self, source, destination, time_offset=0, time_rate=100, up_time=0):
         self.source = source
         self.destination = destination
         self.tmp = self.copy_to_temp()
         self.md5Sum = self.calc_md5sum()
         self.sha256sum = self.calc_sha256sum()
         self.filesize = self.get_file_size()
-        self.realtime = time.time()
-        self.time = time.time() + timeoffset
-        self.timeRate = timeRate
-        self.upTime = upTime
+        self.real_time = time.time()
+        self.time = time.time() + time_offset
+        self.time_rate = time_rate
+        self.up_time = up_time
 
     def get_file_size(self):
         filesize = os.path.getsize(self.tmp)
@@ -74,8 +74,8 @@ class LogCopiedFile():
         return {'source': self.source,
             'destination': self.destination, 'tmp': self.tmp, 
             'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 
-            'filesize': self.filesize, 'realtime': self.realtime, 
-            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+            'filesize': self.filesize, 'real_time': self.real_time, 
+            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return self.tmp
@@ -87,17 +87,17 @@ class LogCopiedFile():
 class LogCdMount():
     """Stores data about a cd mounted to the VM
     """
-    def __init__(self, path, delete=False, timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, path, delete=False, time_offset=0, time_rate=0, up_time=0):
         self.path = path
         self.delete = delete
-        self.realtime = time.time()
-        self.time = time.time() + timeoffset
-        self.timeRate = timeRate
-        self.upTime = upTime
+        self.real_time = time.time()
+        self.time = time.time() + time_offset
+        self.time_rate = time_rate
+        self.up_time = up_time
 
     def get_entry(self):
-        return {'path': self.path, 'realtime': self.realtime, 'time': self.time, 
-            'timeRate': self.timeRate, 'upTime': self.upTime}
+        return {'path': self.path, 'real_time': self.real_time, 'time': self.time, 
+            'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         if self.delete:
@@ -131,7 +131,7 @@ class LogProcess():
     """Stores data of a single process, running in the VM
     """
     def __init__(self, process, path, arguments, stdin='', key_input='', stdout='',
-            stderr='', pid=0, timeoffset=0, timeRate=0, upTime=0):
+            stderr='', pid=0, time_offset=0, time_rate=0, up_time=0):
         self.process = process
         self.path = path
         self.arguments = arguments
@@ -140,17 +140,17 @@ class LogProcess():
         self.stdout = stdout
         self.stderr = stderr
         self.pid = pid
-        self.realtime = time.time()
-        self.time = time.time() + timeoffset
-        self.timeRate = timeRate
-        self.upTime = upTime
+        self.real_time = time.time()
+        self.time = time.time() + time_offset
+        self.time_rate = time_rate
+        self.up_time = up_time
 
     def get_entry(self):
         return {'process': self.process, 'path': self.path, 
             'arguments': self.arguments, 'stdin': self.stdin,
             'key_input': self.key_input, 'stdout': self.stdout, 
-            'stderr': self.stderr, 'pid': self.pid, 'realtime': self.realtime, 
-            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+            'stderr': self.stderr, 'pid': self.pid, 'real_time': self.real_time, 
+            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return False
@@ -161,16 +161,16 @@ class LogProcess():
 class LogRawKeyboard():
     """Stores raw keyboard input
     """
-    def __init__(self, key_input, timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, key_input, time_offset=0, time_rate=0, up_time=0):
         self.key_input = key_input
-        self.realtime = time.time()
-        self.time = time.time() + timeoffset
-        self.timeRate = timeRate
-        self.upTime = upTime
+        self.real_time = time.time()
+        self.time = time.time() + time_offset
+        self.time_rate = time_rate
+        self.up_time = up_time
 
     def get_entry(self):
-        return {'keyboard input': self.key_input, 'realtime': self.realtime, 
-            'time': self.time, 'timeRate': self.timeRate, 'upTime': self.upTime}
+        return {'keyboard input': self.key_input, 'real_time': self.real_time, 
+            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return False
@@ -182,22 +182,22 @@ class LogRawKeyboard():
 class LogMouse():
     """Stores raw mouse input
     """
-    def __init__(self, x, y, lmb, mmb, rmb, timeoffset=0, timeRate=0, upTime=0):
+    def __init__(self, x, y, lmb, mmb, rmb, time_offset=0, time_rate=0, up_time=0):
         self.x = x
         self.y = y
         self.lmb = lmb
         self.mmb = mmb
         self.rmb = rmb
-        self.realtime = time.time()
-        self.time = time.time() + timeoffset
-        self.timeRate = timeRate
-        self.upTime = upTime
+        self.real_time = time.time()
+        self.time = time.time() + time_offset
+        self.time_rate = time_rate
+        self.up_time = up_time
 
     def get_entry(self):
         return {'x': self.x, 'y': self.y, 'left mouse button': self.lmb,
         'middle mouse button': self.mmb, 'right mouse button': self.rmb,
-        'realtime': self.realtime, 'time': self.time, 'timeRate': self.timeRate,
-        'upTime': self.upTime}
+        'real_time': self.real_time, 'time': self.time, 'time_rate': self.time_rate,
+        'up_time': self.up_time}
 
     def cleanup(self):
         return False
@@ -226,8 +226,11 @@ class LogVM():
 
 class LogWarning():
     """Generic warnings, be careful, if any of those appear"""
-    def __init__(self, warning):
+    def __init__(self, warning, verbose=True):
         self.warning = warning
+        if verbose:
+            print(warning)
+
 
     def get_entry(self):
         return {'warning': self.warning}
