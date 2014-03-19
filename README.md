@@ -45,7 +45,7 @@ In [2]: vbox = forgeosi.Vbox(mode=forgeosi.VboxMode.use, basename='ubuntu-lts-ba
 In [3]: vbox.start(session_type=forgeosi.SessionType.gui)
 #top secret password
 In [4]: vbox.keyboard_input('12345\n')
-#needed to access os-specific and
+#needed to access os-specific and Guest Additions functionality
 In [5]: vbox.create_guest_session()
 
 In [6]: vbox.os.open_browser('github.com')

@@ -83,7 +83,7 @@ class VboxConfig():
     def get_nat_network(self, network_name="testnet"):
         """creates a nat network, if none of the name exists.
         
-        This is needed to enabled networking between different VM instances
+        This is needed to enable networking between different VM instances
         """
 
         network_name = network_name + usertoken
@@ -108,6 +108,8 @@ class VboxConfig():
 @decorator
 def check_running(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
+
+    ensures that the vm is running
     """
     if not args[0].running:
         print("Machine needs to be running")
@@ -118,6 +120,8 @@ def check_running(func, *args, **kwargs):
 @decorator
 def check_stopped(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
+
+    ensures that the vm is not running
     """
     if args[0].running:
         print("Machine needs to be stopped")
@@ -128,6 +132,8 @@ def check_stopped(func, *args, **kwargs):
 @decorator
 def check_guestsession(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
+
+    ensures that the vm has a guestsession created
     """
     if not args[0].guestsession:
         print("needs guestsession")
@@ -297,6 +303,13 @@ class Vbox():
         By default, it will export the first disk on the sata controller, which 
         is usually the boot device, in the default config of virtualbox.
         This operation will take some time
+
+        Arguments:
+            path - path to the exported disk, format .vdi
+            controller - controller, where the virtual drive is attached
+            port - port number of the controller
+            disk - disk number of the controller
+            raw - if a raw or a normal vdi file should be created
         """
 
         if not isinstance(controller, ControllerType):
@@ -308,7 +321,7 @@ class Vbox():
         cur_hdd = self.session.machine.get_medium(controller.name,port,disk)
         
         if raw:
-            variant = virtualbox.library.MediumVariant.VmdkRawDisk      
+            variant = virtualbox.library.MediumVariant.vmdk_raw_disk      
         else:
             variant = virtualbox.library.MediumVariant.standard
 
@@ -327,6 +340,9 @@ class Vbox():
         """Creates a memory dump in 64bit elf format
 
         Enables anaysis of non persistent data
+
+        Arguments:
+            path - path to the dump, format .elf
         """
         self.session.console.debugger.dump_guest_core(path, "")
 
@@ -334,7 +350,7 @@ class Vbox():
     def take_screenshot(self, path="/tmp/screenshot.png"):
         """Save screenshot to given path
         Arguments:
-            path - path, where the png image should be created
+            path - path, where the png image should be created, format .png
         """
 
         h, w, _, _, _ = self.session.console.display.get_screen_resolution(0)
@@ -346,8 +362,11 @@ class Vbox():
 
 
     @check_running
-    def start_video(self, path="/tmp/video"):
+    def start_video(self, path="/tmp/video.webm"):
         """Record video of VM-Screen
+
+        Arguments:
+            path - path to the video file on the host, format .webm
         """
         self.session.machine.video_capture_file = path
         self.session.machine.video_capture_enabled = True
@@ -393,6 +412,10 @@ class Vbox():
     @check_running
     def start_network_trace(self, path="/tmp/trace.pcap", adapter=0):
         """Trace network traffic on a certain network adapter
+
+        Arguments:
+            path - path for saving the pcap file
+            adapter - internal number of the network adapter, range 0-
         """
 
         self.network = session.machine.get_network_adapter(adapter)
@@ -405,6 +428,9 @@ class Vbox():
     @check_running
     def stop_network_trace(self, adapter=0):
         """Stop network trace for one adapter
+
+        Arguments:
+            adapter - internal number of the network adapter, range 0-7
         """
 
         self.network = session.machine.get_network_adapter(adapter=0)
@@ -575,6 +601,9 @@ class Vbox():
         """Creates a directory and all intermediate ones
 
         use os specific ones over this command!
+
+        Arguments:
+            directory = path to the directory in the vm
         """
         self.guestsession.makedirs(directory)
 
@@ -585,6 +614,10 @@ class Vbox():
         """Copy a file form outside into the VM
 
         This leaves no plausible trace for faking, so use with care
+
+        Arguments:
+            source - source path on the host
+            dest - destination path in the vm
         """
 
         progress = self.guestsession.copy_to(source, destination, [])
@@ -597,9 +630,17 @@ class Vbox():
         else:
             return progress
 
+
+    @check_running
+    @check_guestsession
     def copy_from_vm(self, source, dest, wait=True):
-        """Copy a file from the VM to the host, creates no log, since it should
-        not alter the guest
+        """Copy a file from the VM to the host
+
+        creates no log, since it should not alter the guest
+
+        Arguments:
+            source - source path in the vm
+            dest - destination path on the host
         """
 
         progress = self.guestsession.copy_from(source, destination)
@@ -616,7 +657,11 @@ class Vbox():
 
         avoid this method, as result tends to be unreliable.
         Needs no Guest Additions
-        """
+
+        Arguments:
+            key_input - string which will be typed on the guest, escapecodes 
+                will be interpreted
+        """ 
 
         self.session.console.keyboard.put_keys(key_input)
 
@@ -710,6 +755,10 @@ class Vbox():
         data. The network has to be created first with 
         VboxConfig.get_nat_network(). Using adapter 0 will reconfigure the 
         default network adapter, use numbers 2-7 for additional adapters.
+
+        Arguments:
+            network_name - name of the the network the vm should be added to
+            adapter - internal number of the network adapter, range 0-7
         """
 
         network_name = network_name + usertoken
@@ -727,7 +776,11 @@ class Vbox():
     def get_ip(self, adapter=0):
         """returns the IPv4 address of the given adapter
 
-        Needs guest additions installed, not reliable with windows guests
+        Needs guest additions installed, not reliable with windows guests currently,
+        might be more useful in the future
+
+        Arguments:
+            adapter - internal number of the network adapter, range 0-7
         """
 
         return self.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
@@ -739,7 +792,11 @@ class Vbox():
         """clean all data except, what might have been exported
 
         This should be the last thing to do, just to make sure, we do not clutter
-        our VirtualBox.
+        our VirtualBox, use with care, this deletes files on the host system!
+
+        Arguments:
+            ignore_errors - ignore errors in removing files
+            rm_clone - remove the cloned virtual machine
         """
         path = self.log.cleanup()
         while path:

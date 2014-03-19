@@ -16,6 +16,7 @@ to detect invalid parameters.
 class VboxMode(Enum):
     """Basic operation mode off the VBox class
 
+    Members:
         clone
         use
     """
@@ -26,6 +27,7 @@ class VboxMode(Enum):
 class SessionType(Enum):
     """Decides, if VirtualBox creates a graphical frontend for the vm or not
 
+    Members:
         headless
         gui
         sdl
@@ -39,6 +41,7 @@ class SessionType(Enum):
 class RunMethod(Enum):
     """Decides, how a program should be started
 
+    Members:
         shell
         direct
         start
@@ -52,6 +55,7 @@ class RunMethod(Enum):
 class ControllerType(Enum):
     """Mass storage controller types
 
+    Members:
         SATA
         IDE
     """

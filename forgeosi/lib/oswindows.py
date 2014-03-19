@@ -74,6 +74,11 @@ class osWindows():
     def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
         cmd.exe, needs properly split arguments for cmd=True
+
+        Arguments:
+            command - command which will be executed
+            cmd - run inside a cmd or powershell
+            stop_ps - kill the powershell window after running the command
         """
         if cmd:
             return self.vb.run_process(command=self.cmd, arguments=["/C"]+command)
@@ -195,7 +200,7 @@ class osWindows():
             url - url of the website to open
             method - decide how to run the browser.
                 Valid options: 
-                    RunMethod.direct - VirtualBox-API
+                    RunMethod.direct - VirtualBox-API, does not work on Windows 8
                     RunMethod.shell - Windows Powershell
                     RunMethod.run - Windows run dialog
                     RunMethod.start - Startmenu

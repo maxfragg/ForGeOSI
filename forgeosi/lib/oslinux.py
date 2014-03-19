@@ -163,12 +163,17 @@ class osLinux():
         """
         self.run_shell_cmd("mkdir -p "+path)
 
-    def create_user(self, username, password, rootpassword):
+    def create_user(self, username, password, sudopassword):
         """Creates a new user in the VM
+
+        Arguments:
+            username - username of the new user
+            password - password of the new user
+            sudopassword - password of the existing sudo user
         """
         self.run_shell_cmd("sudo useradd "+username+
             "\n"+rootpassword+"\nsudo passwd "+username+"\nsleep_hack\n"
-            +password+"\nsleep_hack\n"+password+"\n")
+            +sudopassword+"\nsleep_hack\n"+password+"\n")
 
 
     def download_file(self, url, destination):
@@ -188,20 +193,20 @@ class osLinux():
         as a propper webserver, unlike netcat.
 
         Arguments:
-            port - needs to be over 1000, default is 8080
             directory - a directory to be served, including subdirectories, 
                 default is ~
+            port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
             +str(port))
 
 
-    def open_browser(self, url="www.google.com", method=RunMethod.shell):
+    def open_browser(self, url="www.google.com", method=RunMethod.direct):
         """Opens a firefox browser with the given url
 
         Arguments:
-            method - decide how to run the browser, currently "direct" and 
-                "shell" are available 
+            url - url which should be opened in the browser
+            method - decide how to run the browser, must be of type RunMethod
         """
         if not isinstance(method, RunMethod):
             raise TypeError("method needs to be of type RunMethod")
@@ -212,14 +217,18 @@ class osLinux():
         elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
         else:
-            self.vb.log.add_warning("RunMethod: "+method.name+" is not implemented on Linux")
+            self.vb.log.add_warning("RunMethod: "+method.name+
+                " is not implemented on Linux")
 
 
     def uninstall_program(self, program):
         """remove a program from the guest system with apt-get
 
+        Arguments:
+            program - name of the program to remove
         """
-        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program, self.vb.password)
+        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program, 
+            self.vb.password)
         self.run_shell_cmd(command=cmd)
 
 
