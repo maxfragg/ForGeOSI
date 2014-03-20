@@ -1,1 +1,3 @@
-__all__ = ["forgeosi","lib/*.py"]
+from forgeosi import *
+
+__all__ = ['forgeosi','lib']

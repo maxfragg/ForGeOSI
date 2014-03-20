@@ -61,3 +61,16 @@ class ControllerType(Enum):
     """
     SATA = 1
     IDE = 2
+
+class StopMode(Enum):
+    """Modes of stopping the virtual machine
+
+    Members:
+        poweroff
+        shutdown
+        save_state
+    """
+    poweroff = 1
+    shutdown = 2
+    save_state = 3
+    

@@ -10,7 +10,7 @@
 
 import base64
 import time
-from lib.param import * #local import
+from param import * #local import
 
 
 class osWindows():
@@ -127,7 +127,7 @@ class osWindows():
         Arguments:
             source - source to copy from
             destination - destination to copy to
-            cmd - used cmd.exe or Powershell
+            cmd - use cmd.exe or Powershell
         """
         self._check_path(source)
         self._check_path(destination)
@@ -144,7 +144,7 @@ class osWindows():
         Arguments:
             source - source to move from
             destination - destination to move to
-            cmd - used cmd.exe or Powershell
+            cmd - use cmd.exe or Powershell
         """
         self._check_path(source)
         self._check_path(destination)
@@ -154,6 +154,21 @@ class osWindows():
         else:
             self.run_shell_cmd(command="move "+source+" "+destination, cmd=False)
 
+
+    def make_dir(self, path, cmd=True):
+        """Creates a directory on the guest
+
+        Arguments:
+            path - path to the directory, missing parent-directories will be 
+                created as well
+            cmd - use cmd.exe or Powershell
+        """
+        self._check_path(path)
+
+        if cmd:
+            self.run_shell_cmd(command=["mkdir", path], cmd=True)
+        else:
+            self.run_shell_cmd(command="mkdir "+path, cmd=False)
 
     def create_user(self ,username, password):
         """Creates a new user in the guest with default privileges. The 

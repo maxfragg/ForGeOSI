@@ -41,6 +41,7 @@ Dependencies:
     fopybox
     decorator
     enum34
+    lxml
 """
 
 usertoken=""
@@ -181,12 +182,10 @@ class Vbox():
             try:
                 _snap = _orig.find_snapshot(linked_name)
             except:
-                #_orig.lock_machine(_orig_session,virtualbox.library.LockType.shared)
 
                 self.progress = _orig_session.console.take_snapshot(linked_name, "")
                 self.progress.wait_for_completion()
-                _snap = _orig.find_snapshot(linked_name)
-                #_orig_session.unlock_machine()    
+                _snap = _orig.find_snapshot(linked_name)    
 
             self.progress =  _snap.machine.clone_to(
                     self.vm,virtualbox.library.CloneMode.machine_state,
@@ -223,6 +222,8 @@ class Vbox():
             wait - waits till the machine is initialized, it will not have 
                 finished booting yet. 
         """
+        if not isinstance(session_type, SessionType):
+            raise TypeError("session_type needs to be of type SessionType")
 
         self.unlock()
 
@@ -240,38 +241,57 @@ class Vbox():
 
 
     @check_running
-    def stop(self, shutdown=True, wait=True):
+    def stop(self, stop_mode=StopMode.shutdown, wait=True):
         """Stop a running machine
         Arguments:
-            shutdown - will send acpi signal to the machine
-                might take some time for the machine to power down.
-                Otherwise the machine will just be turned off, and its state in
-                VirtualBox will be "aborted"
-                Can hang, if the OS requires interaction, so try to kill all 
-                applications first
-        """  
+            stop_mode - Argument of tpye StopMode, available options are:
+                shutdown - will send acpi signal to the machine
+                    might take some time for the machine to power down.
+                    Can hang, if the OS requires interaction, so try to kill all 
+                    applications first
+                poweroff - will virtually pull the power plug, works reliable 
+                    and fast, leaves vm in the state aborted
+                save_state - freezes the virtual machine in its current state 
+        """
+        if not isinstance(stop_mode, StopMode):
+            raise TypeError("stop_mode needs to be of type StopMode")
 
-        if shutdown:
+        if stop_mode is StopMode.shutdown:
             self.session.console.power_button()
             if wait:
                 while (self.vm.state > 1):
                     time.sleep(5)
             self.running = False
             self.guestsession = False
+            self.os = False
 
-        else:
-            self.progress = self.session.console.power_down()
+        elif stop_mode is StopMode.poweroff:
+            progress = self.session.console.power_down()
             if wait:
-                self.progress.wait_for_completion()
+                progress.wait_for_completion()
                 self.unlock()
                 self.running = False
                 self.guestsession = False
+                self.os = False
             else:
                 self.running = False
                 self.guestsession = False
-                return self.progress
-        
+                self.os = False
+                return progress
 
+        elif stop_mode is StopMode.save_state:
+            progress = self.session.console.save_state()
+            if wait:
+                progress.wait_for_completion()
+                self.running = False
+                self.guestsession = False
+                self.os = False
+            else:
+                self.running = False
+                self.guestsession = False
+                self.os = False
+                return progress
+        
 
     def lock(self):
         """Locks the machine to enable certain operations
@@ -339,7 +359,7 @@ class Vbox():
     def dump_memory(self, path="/tmp/dump.elf"):
         """Creates a memory dump in 64bit elf format
 
-        Enables anaysis of non persistent data
+        Enables analysis of non persistent data
 
         Arguments:
             path - path to the dump, format .elf
@@ -349,6 +369,7 @@ class Vbox():
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
         """Save screenshot to given path
+
         Arguments:
             path - path, where the png image should be created, format .png
         """
@@ -682,7 +703,7 @@ class Vbox():
         Needs no Guest Additions
 
         Arguments:
-            scancode - List of scancodes or chars
+            keys - List of scancodes or chars
             make_code - send the keypress
             break_code - send the keyrelease
         """
@@ -754,7 +775,7 @@ class Vbox():
         This enables multiple virtual machines to see each other and exchange 
         data. The network has to be created first with 
         VboxConfig.get_nat_network(). Using adapter 0 will reconfigure the 
-        default network adapter, use numbers 2-7 for additional adapters.
+        default network adapter, use numbers 1-7 for additional adapters.
 
         Arguments:
             network_name - name of the the network the vm should be added to

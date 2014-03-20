@@ -5,7 +5,7 @@
 # [maximilian.krueger@fau.de]
 #
 
-from lib.param import RunMethod #local import
+from param import RunMethod #local import
 import time
 
 
