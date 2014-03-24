@@ -9,8 +9,8 @@ from enum import Enum
 __all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType"]
 
 __doc__ = """\
-Collection of enums used for parameters, meant for type safety in parameters, 
-to detect invalid parameters.  
+Collection of enums used for parameters, meant for type safety in parameters,
+to detect invalid parameters.
 """
 
 class VboxMode(Enum):
@@ -73,4 +73,3 @@ class StopMode(Enum):
     poweroff = 1
     shutdown = 2
     save_state = 3
-    

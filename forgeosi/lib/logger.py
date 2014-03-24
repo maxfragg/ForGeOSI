@@ -41,7 +41,8 @@ def toXML(classElement, **kwargs):
 class LogCopiedFile():
     """Stores data of a single file, copied to the VM
     """
-    def __init__(self, source, destination, time_offset=0, time_rate=100, up_time=0):
+    def __init__(self, source, destination, time_offset=0, time_rate=100,
+            up_time=0):
         self.source = source
         self.destination = destination
         self.tmp = self.copy_to_temp()
@@ -72,10 +73,11 @@ class LogCopiedFile():
 
     def get_entry(self):
         return {'source': self.source,
-            'destination': self.destination, 'tmp': self.tmp, 
-            'md5sum': self.md5Sum, 'sha256sum': self.sha256sum, 
-            'filesize': self.filesize, 'real_time': self.real_time, 
-            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
+            'destination': self.destination, 'tmp': self.tmp,
+            'md5sum': self.md5Sum, 'sha256sum': self.sha256sum,
+            'filesize': self.filesize, 'real_time': self.real_time,
+            'time': self.time, 'time_rate': self.time_rate,
+            'up_time': self.up_time}
 
     def cleanup(self):
         return self.tmp
@@ -87,7 +89,8 @@ class LogCopiedFile():
 class LogCdMount():
     """Stores data about a cd mounted to the VM
     """
-    def __init__(self, path, delete=False, time_offset=0, time_rate=0, up_time=0):
+    def __init__(self, path, delete=False, time_offset=0, time_rate=0,
+            up_time=0):
         self.path = path
         self.delete = delete
         self.real_time = time.time()
@@ -96,8 +99,9 @@ class LogCdMount():
         self.up_time = up_time
 
     def get_entry(self):
-        return {'path': self.path, 'real_time': self.real_time, 'time': self.time, 
-            'time_rate': self.time_rate, 'up_time': self.up_time}
+        return {'path': self.path, 'real_time': self.real_time,
+            'time': self.time, 'time_rate': self.time_rate, 
+            'up_time': self.up_time}
 
     def cleanup(self):
         if self.delete:
@@ -130,8 +134,8 @@ class LogEncodedCommand():
 class LogProcess():
     """Stores data of a single process, running in the VM
     """
-    def __init__(self, process, path, arguments, stdin='', key_input='', stdout='',
-            stderr='', pid=0, time_offset=0, time_rate=0, up_time=0):
+    def __init__(self, process, path, arguments, stdin='', key_input='',
+            stdout='', stderr='', pid=0, time_offset=0, time_rate=0, up_time=0):
         self.process = process
         self.path = path
         self.arguments = arguments
@@ -146,11 +150,12 @@ class LogProcess():
         self.up_time = up_time
 
     def get_entry(self):
-        return {'process': self.process, 'path': self.path, 
+        return {'process': self.process, 'path': self.path,
             'arguments': self.arguments, 'stdin': self.stdin,
-            'key_input': self.key_input, 'stdout': self.stdout, 
-            'stderr': self.stderr, 'pid': self.pid, 'real_time': self.real_time, 
-            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
+            'key_input': self.key_input, 'stdout': self.stdout,
+            'stderr': self.stderr, 'pid': self.pid, 'real_time': self.real_time,
+            'time': self.time, 'time_rate': self.time_rate,
+            'up_time': self.up_time}
 
     def cleanup(self):
         return False
@@ -169,7 +174,7 @@ class LogRawKeyboard():
         self.up_time = up_time
 
     def get_entry(self):
-        return {'keyboard input': self.key_input, 'real_time': self.real_time, 
+        return {'keyboard input': self.key_input, 'real_time': self.real_time,
             'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
@@ -208,13 +213,13 @@ class LogMouse():
 
 class LogVM():
     """saves general properties of one VM"""
-    def __init__(self, vmname, basename, osType):  
+    def __init__(self, vmname, basename, osType):
         self.vmname = vmname
         self.basename = basename
         self.osType = osType
 
     def get_entry(self):
-        return {'vmname': self.vmname, 'basename': self.basename, 
+        return {'vmname': self.vmname, 'basename': self.basename,
             'osType': self.osType}
 
     def cleanup(self):
@@ -259,13 +264,14 @@ class _LogInterface():
 
     def to_xml(self):
         return toXML(self, nodeName="log_interface")
-        
+
 
 class Logger():
     """A simple logger for fopybox
 
-    This logger creates a protocol of actions performed with pyvbox, that altered
-    the virtual machine image. XML-export is available with get_log and write_log
+    This logger creates a protocol of actions performed with pyvbox, that
+    altered the virtual machine image. XML-export is available with get_log and
+    write_log
 
     """
 
@@ -329,12 +335,12 @@ class Logger():
     def get_pretty_log(self):
         """Returns human readable log
         """
-        ret=""
+        ret = ""
         for l in self.log:
-            ret+=l.__class__.__name__+":\n"
+            ret += l.__class__.__name__+":\n"
             entry = l.get_entry()
             for key in entry:
-                ret+="\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
+                ret += "\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
         return ret
 
 
@@ -361,5 +367,3 @@ class Logger():
             while path is False and len(self.log) > 0:
                 path = self.log.pop().cleanup()
             return path
-
-        

@@ -4,31 +4,31 @@
 # By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
-# _base64_encode_command is straight from 
+# base64_encode_command is straight from
 # http://jasagerpwn.googlecode.com/svn/trunk/src/powershellPayload.py
 
 
 import base64
 import time
-from param import * #local import
+from param import *  # local import
 
 
 class osWindows():
     """Windows specific operations
 
-    Classes starting with OS should all implement the same interface, that offers 
-    features, that depend on the operation system, running in the VM.
+    Classes starting with OS should all implement the same interface, that
+    offers features, that depend on the operation system, running in the VM.
     For this class to work, @term needs to be the path to a Windows Powershell.
-    Expects the operating system to be a MS Windows 7 (NT6.1) or newer, with 
+    Expects the operating system to be a MS Windows 7 (NT6.1) or newer, with
     Powershell 2.0 or newer installed.
 
     General notes:
-        All paths on the guest should be absolute and use 2 backslashes as 
+        All paths on the guest should be absolute and use 2 backslashes as
         separator, paths with '-' in it will most likely break in any function
         using powershell
     """
 
-    def __init__(self,vb,
+    def __init__(self, vb,
             term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             home="C:\\Users\\default.windows-8-base\\"):
         self.vb = vb
@@ -40,14 +40,14 @@ class osWindows():
 
     def _base64_encode_command(self, command):
         """using base64 encoded commands solves issues with quoting in the
-        VirtualBox execute function, needed as a workaround, for pythons 
+        VirtualBox execute function, needed as a workaround, for pythons
         base64 function not inserting \x00 after each char
         """
 
         blank_command = ""
         for char in command:
-          blank_command += char + "\x00"
-          
+            blank_command += char + "\x00"
+
         command = blank_command
         command = base64.b64encode(command)
         return command
@@ -58,7 +58,7 @@ class osWindows():
 
         command = base64.b64decode(command)
         blank_command = ""
-        i = 0;
+        i = 0
         for char in command:
             if (i % 2) == 0:
                 blank_command += char
@@ -66,10 +66,11 @@ class osWindows():
         return blank_command
 
     def _check_path(self, path):
-        """check if path parameters contain a '-', since this causes problems in arguments
+        """check if path parameters contain a '-'
         """
         if '-' in path:
-            vb.log.add_warning('The path "'+path+'" contains a "-", this is know to cause problems')
+            vb.log.add_warning('The path "'+path+
+                '" contains a "-", this is know to cause problems')
 
     def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
@@ -81,19 +82,22 @@ class osWindows():
             stop_ps - kill the powershell window after running the command
         """
         if cmd:
-            return self.vb.run_process(command=self.cmd, arguments=["/C"]+command)
+            return self.vb.run_process(command=self.cmd,
+                arguments=["/C"]+command)
         else:
             if stop_ps:
                 command += "; stop-process powershell"
             self.vb.log.add_encodedCommand(command)
             command = self._base64_encode_command(command)
-            return self.vb.run_process(command=self.term, arguments=["-OutputFormat","Text","-inputformat", "none", "-EncodedCommand", command])
+            return self.vb.run_process(command=self.term,
+                arguments=["-OutputFormat", "Text", "-inputformat", "none",
+                    "-EncodedCommand", command])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
         """sends keyboard input using windows powershell and visual basic
 
-        Using more than one identifier is not advised, since they are not 
+        Using more than one identifier is not advised, since they are not
         combined as on Linux, use for plain text only
 
         Arguments:
@@ -103,14 +107,14 @@ class osWindows():
             pid - Process id of the application
         """
 
-        command ="""add-type -AssemblyName microsoft.VisualBasic
+        command = """add-type -AssemblyName microsoft.VisualBasic
         add-type -AssemblyName System.Windows.Forms
         start-sleep -Milliseconds 500
         """
         if name:
             command += '''(New-Object -ComObject wscript.shell).AppActivate("'''+name+'''")
             '''
-        
+
         if pid:
             command += """$mypid ="""+str(pid)+"""
             Set-ForegroundWindow (Get-Process -id $mypid).MainWindowHandle
@@ -133,9 +137,10 @@ class osWindows():
         self._check_path(destination)
 
         if cmd:
-            self.run_shell_cmd(command=["copy",source,destination], cmd=True)
+            self.run_shell_cmd(command=["copy", source, destination], cmd=True)
         else:
-            self.run_shell_cmd(command="copy "+source+" "+destination, cmd=False)
+            self.run_shell_cmd(command="copy "+source+" "+destination,
+                cmd=False)
 
 
     def move_file(self, source, destination, cmd=True):
@@ -152,14 +157,15 @@ class osWindows():
         if cmd:
             self.run_shell_cmd(command=["move", source, destination], cmd=True)
         else:
-            self.run_shell_cmd(command="move "+source+" "+destination, cmd=False)
+            self.run_shell_cmd(command="move "+source+" "+destination,
+                cmd=False)
 
 
-    def make_dir(self, path, cmd=True):
+    def make_dir(self, path="C:\\test", cmd=True):
         """Creates a directory on the guest
 
         Arguments:
-            path - path to the directory, missing parent-directories will be 
+            path - path to the directory, missing parent-directories will be
                 created as well
             cmd - use cmd.exe or Powershell
         """
@@ -171,14 +177,14 @@ class osWindows():
             self.run_shell_cmd(command="mkdir "+path, cmd=False)
 
     def create_user(self ,username, password):
-        """Creates a new user in the guest with default privileges. The 
+        """Creates a new user in the guest with default privileges. The
         guestsession needs to belong to a administrator user
 
         Arguments:
             username - Name for the new user
             password - Password for the new user
         """
-        
+
         command = """
         [ADSI]$server="WinNT://{0}"
         $user=$server.create("user","{1}")
@@ -191,7 +197,7 @@ class osWindows():
         self.run_shell_cmd(command=command)
 
 
-    def download_file(self, url, path):
+    def download_file(self, url, path="C:\\test\\image.jpg"):
         """Download a file using powershell
 
         Arguments:
@@ -199,27 +205,27 @@ class osWindows():
             path - full path, where the file should be saved
         """
         self._check_path(path)
-        
-        command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url,path)
+
+        command = '''(new-object System.Net.WebClient).DownloadFile("{0}", "{1}")'''.format(url, path)
 
         self.run_shell_cmd(command=command)
 
 
 
 
-    def open_browser(self, url="www.google.com", method=RunMethod.direct, 
+    def open_browser(self, url="www.google.com", method=RunMethod.direct,
             timeout=20000):
         """Opens a Internet Explorer with the given url
 
         Arguments:
             url - url of the website to open
             method - decide how to run the browser.
-                Valid options: 
-                    RunMethod.direct - VirtualBox-API, does not work on Windows 8
+                Valid options:
+                    RunMethod.direct - VirtualBox-API, doesn't work on Windows 8
                     RunMethod.shell - Windows Powershell
                     RunMethod.run - Windows run dialog
                     RunMethod.start - Startmenu
-                Note: direct will block, until the browser is closed, if no 
+                Note: direct will block, until the browser is closed, if no
                 timeout is set!
             timeout - in Milliseconds
         """
@@ -228,7 +234,8 @@ class osWindows():
             raise TypeError("method needs to be of type RunMethod")
 
         if method is RunMethod.direct:
-            self.vb.run_process(command=self.ie, arguments=[url], timeout=timeout)
+            self.vb.run_process(command=self.ie, arguments=[url],
+                timeout=timeout)
 
         elif method is RunMethod.shell:
             command = '''$ie = new-object -com "InternetExplorer.Application";$ie.navigate("{0}");$ie.visible = $true'''.format(url)
@@ -236,7 +243,7 @@ class osWindows():
             self.run_shell_cmd(command=command)
 
         elif method is RunMethod.run:
-            self.vb.keyboard_combination(['win','r'])
+            self.vb.keyboard_combination(['win', 'r'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
 
@@ -244,7 +251,6 @@ class osWindows():
             self.vb.keyboard_combination(['win'])
             time.sleep(5)
             self.vb.keyboard_input('iexplore '+url+'\n')
-
 
 
     def kill_process(self, name='', pid=0):
@@ -287,7 +293,7 @@ class osWindows():
     def uninstall_guest_additions(self, version="4.3.8"):
         """remove the guest additions
 
-        Warning: This can not be undone, since remote running of software is 
+        Warning: This can not be undone, since remote running of software is
         very limited without guest additions! You need to know the exact version
         installed
         """

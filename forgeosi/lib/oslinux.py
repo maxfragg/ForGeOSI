@@ -5,15 +5,15 @@
 # [maximilian.krueger@fau.de]
 #
 
-from param import RunMethod #local import
+from param import RunMethod  # local import
 import time
 
 
 class osLinux():
-    """Linux specific operations 
+    """Linux specific operations
 
-    Classes starting with os should all implement the same interface, that offers 
-    features, that depend on the opertation system, running in the VM.
+    Classes starting with os should all implement the same interface, that
+    offers features, that depend on the opertation system, running in the VM.
     some functions require additional software:
         xdotool
 
@@ -28,7 +28,7 @@ class osLinux():
         self.term = term
         self.home = home
         self.shell = "/bin/bash"
-        self.env = ["DISPLAY=:0", "USER="+vb.username, 
+        self.env = ["DISPLAY=:0", "USER="+vb.username,
             "HOME=/home/"+vb.username] + env
         self.xdt = "/usr/bin/xdotool"
         self.xdte = xdotool_extended
@@ -38,10 +38,10 @@ class osLinux():
         """runs a command inside the default shell of the user
 
         Arguments:
-            gui - decides if a x-terminal should be created, or the scripts 
+            gui - decides if a x-terminal should be created, or the scripts
                 should run in a naked bash without terminal emulator
             close_shell - if a x-terminal is created, this is needed to make the
-                window close again 
+                window close again
         """
         if gui:
             if close_shell:
@@ -49,7 +49,7 @@ class osLinux():
             else:
                 cmd = command + "&\n"
 
-            self.vb.run_process(command=self.term, key_input=cmd, 
+            self.vb.run_process(command=self.term, key_input=cmd,
                 environment=self.env, native_input=True, wait=True)
         else:
             self.vb.run_process(command=self.shell, arguments=['-c',command],
@@ -65,7 +65,7 @@ class osLinux():
         """
         args = []
 
-        #turn this function into a noop if we do not want to use it (like on unity)
+        #turn this function into a noop if we do not want to use it
         if not self.xdte:
             return args
 
@@ -85,21 +85,21 @@ class osLinux():
         """Sends keyboard input to a running gui process.
 
         Arguments
-            input - String of characters to be send to the process, magic for 
-                sleeping during input, put a 'sleep_hack\n' in the string to 
-                sleep at this position, for example to wait for sudo to ask for 
+            input - String of characters to be send to the process, magic for
+                sleeping during input, put a 'sleep_hack\n' in the string to
+                sleep at this position, for example to wait for sudo to ask for
                 a password
-            window_class - X-property, usually matching the program name, which 
+            window_class - X-property, usually matching the program name, which
                 can be used to find program. Will be ignored if empty
-            name - X-property, might work better than window_class for some 
+            name - X-property, might work better than window_class for some
                 usecases
-            pid - process id, unique idenifier per process, but not per window, 
+            pid - process id, unique idenifier per process, but not per window,
                 is not allways part of the X-properties. Will be ignored if Zero
         """
 
         #type will simulate typing and interpret space '\n'
-        args = self._build_xdotool_args(window_class, name, pid) + ["type","--delay","30"] 
-        
+        args = self._build_xdotool_args(window_class, name, pid) + ["type",
+            "--delay","30"]
 
         #send input line by line, to prevent to long argument
         key_input_split = str.splitlines(str(key_input))
@@ -109,7 +109,7 @@ class osLinux():
                 time.sleep(10)
             else:
                 #reinsert '\n' since we lost that with the splitlines
-                self.vb.run_process(command=self.xdt,arguments=args+[part+'\n'], 
+                self.vb.run_process(command=self.xdt,arguments=args+[part+'\n'],
                     environment=self.env)
 
 
@@ -118,13 +118,13 @@ class osLinux():
         """Sends a special key or key combination to a running gui process.
 
         Arguments
-            key - X name of the key to be send as a string, names like "alt", 
+            key - X name of the key to be send as a string, names like "alt",
                 "ctrl", combinations like "ctl+alt+backspace" also work
-            window_class - X-property, usually matching the program name, which 
+            window_class - X-property, usually matching the program name, which
                 can be used to find program. Will be ignored if empty
-            name - X-property, might work better than window_class for some 
+            name - X-property, might work better than window_class for some
                 usecases
-            pid - process id, unique idenifier per process, but not per window, 
+            pid - process id, unique idenifier per process, but not per window,
                 is not allways part of the X-properties. Will be ignored if Zero
         """
 
@@ -154,11 +154,11 @@ class osLinux():
         """
         self.run_shell_cmd("mv "+source+" "+destination)
 
-    def make_dir(self, path):
+    def make_dir(self, path="/tmp/test"):
         """Creates a directory on the guest
 
         Arguments:
-            path - path to the directory, missing parent-directories will be 
+            path - path to the directory, missing parent-directories will be
                 created as well
         """
         self.run_shell_cmd("mkdir -p "+path)
@@ -171,12 +171,12 @@ class osLinux():
             password - password of the new user
             sudopassword - password of the existing sudo user
         """
-        self.run_shell_cmd("sudo useradd "+username+
-            "\n"+rootpassword+"\nsudo passwd "+username+"\nsleep_hack\n"
-            +sudopassword+"\nsleep_hack\n"+password+"\n")
+        self.run_shell_cmd("sudo useradd "+username
+            + "\n" + rootpassword + "\nsudo passwd " + username
+            + "\nsleep_hack\n" + sudopassword+"\nsleep_hack\n"+password+"\n")
 
 
-    def download_file(self, url, destination):
+    def download_file(self, url, destination="/tmp/test/image.jpg"):
         """Download file using wget
 
         Arguments:
@@ -198,7 +198,7 @@ class osLinux():
             port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-            +str(port))
+            + str(port))
 
 
     def open_browser(self, url="www.google.com", method=RunMethod.direct):
@@ -212,13 +212,13 @@ class osLinux():
             raise TypeError("method needs to be of type RunMethod")
 
         if method is RunMethod.direct:
-            self.vb.run_process(command="/usr/bin/firefox", 
+            self.vb.run_process(command="/usr/bin/firefox",
                 arguments=["-new-tab",url], environment=self.env, wait=False)
         elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
         else:
-            self.vb.log.add_warning("RunMethod: "+method.name+
-                " is not implemented on Linux")
+            self.vb.log.add_warning("RunMethod: " + method.name
+                + " is not implemented on Linux")
 
 
     def uninstall_program(self, program):
@@ -227,7 +227,7 @@ class osLinux():
         Arguments:
             program - name of the program to remove
         """
-        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program, 
+        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program,
             self.vb.password)
         self.run_shell_cmd(command=cmd)
 
