@@ -15,16 +15,18 @@ import hashlib
 import os
 from lxml import etree
 
+_ignore = ['time', 'up_time', 'time_rate', 'real_time']
+
 
 def toXML(classElement, **kwargs):
     """creates a xml representation of a given object
     """
-    if kwargs.has_key('nodeName'):
+    if 'nodeName' in kwargs:
         nodeName = kwargs['nodeName']
     else:
         nodeName = "Node"
 
-    if kwargs.has_key('ignore'):
+    if 'ignore' in kwargs:
         ignore = kwargs['ignore']
     else:
         ignore = []
@@ -83,7 +85,7 @@ class LogCopiedFile():
         return self.tmp
 
     def to_xml(self):
-        return toXML(self, nodeName="copiedFile", ignore=['time'])
+        return toXML(self, nodeName="copiedFile", ignore=_ignore)
 
 
 class LogCdMount():
@@ -110,7 +112,7 @@ class LogCdMount():
             return False
 
     def to_xml(self):
-        return toXML(self, nodeName="cd", ignore=['time'])
+        return toXML(self, nodeName="cd", ignore=_ignore)
 
 
 class LogEncodedCommand():
@@ -161,7 +163,7 @@ class LogProcess():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="process", ignore=['time'])
+        return toXML(self, nodeName="process", ignore=_ignore)
 
 class LogRawKeyboard():
     """Stores raw keyboard input
@@ -181,7 +183,7 @@ class LogRawKeyboard():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="keyboard_input", ignore=['time'])
+        return toXML(self, nodeName="keyboard_input", ignore=_ignore)
 
 
 class LogMouse():
@@ -208,7 +210,7 @@ class LogMouse():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="mouse_input", ignore=['time'])
+        return toXML(self, nodeName="mouse_input", ignore=_ignore)
 
 
 class LogVM():

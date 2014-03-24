@@ -6,7 +6,7 @@
 #
 
 from enum import Enum
-__all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType"]
+__all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType", "StopMode"]
 
 __doc__ = """\
 Collection of enums used for parameters, meant for type safety in parameters,

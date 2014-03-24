@@ -4,21 +4,25 @@
 # By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 
-import forgeosi
+import sys
 import time
 
+sys.path.append('../')
 
-def run(vm, output, verbose):
+import forgeosi
+
+
+def run(vm, output, verbose, run):
     """testcase 1
 
     starts a vm, enters password, opens webbrowser, creates directory
     and saves an image file
     """
-    vbox = forgeosi(basename=vm)
+    vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
     vbox.start()
     time.sleep(10)
-    vbox.keybord_input("12345\n")
-    vbox.create_guestsession()
+    vbox.keyboard_input("12345\n")
+    vbox.create_guest_session()
     vbox.os.open_browser("https://en.wikipedia.org/wiki/Rhinoceros")
     time.sleep(10)
     vbox.take_screenshot(output+"/screenshot.png")
@@ -27,4 +31,4 @@ def run(vm, output, verbose):
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
     vbox.stop()
     vbox.log.write_log(output+"/log.xml")
-    vbox.export(path=output+"disk.vdi")
+    vbox.export(path=output+"/disk.vdi")

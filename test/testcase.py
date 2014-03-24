@@ -10,6 +10,7 @@
 
 import sys
 import getopt
+from time import gmtime, strftime
 import testcase01
 import testcase02
 import testcase03
@@ -23,9 +24,10 @@ def main(argv):
     """Runs a single testcase, wraps argument parsing and checking
     """
     verbose = False
+    run = ''
     try:
-        opts, args = getopt.getopt(argv,"hvm:o:t:", ["machine=", "output=",
-            "testcase="])
+        opts, args = getopt.getopt(argv,"hvm:o:t:r:", ["machine=", "output=",
+            "testcase=", "run="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -40,10 +42,18 @@ def main(argv):
         elif opt in ("-o", "--output"):
             out = arg
         elif opt in ("-t", "--testcase"):
-            testcase = opt
+            testcase = arg
+        elif opt in ("-r", "--run"):
+            run = arg
         else:
             usage()
             sys.exit()
+
+    if verbose:
+        print 'run: '+run
+        print '\tvm: '+vm
+        print '\tout:'+out
+        print '\ttestcase: '+testcase
 
     if testcase in ("01", "testcase01"):
         tc = testcase01
@@ -52,7 +62,10 @@ def main(argv):
     elif testcase in ("03", "testcase03"):
         tc = testcase03
 
-    tc.run(vm=vm, output=out, verbose=verbose)
+    timestamp = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
+
+    tc.run(vm=vm, output=out, verbose=verbose,
+        run=timestamp+"_"+vm+"_"+str(run))
 
 if __name__ == "__main__":
     main(sys.argv[1:])

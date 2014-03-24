@@ -203,7 +203,8 @@ class Vbox():
             self.is_clone = True
         elif mode == VboxMode.use:
             self.vm = self.vb.find_machine(basename)
-            self.osType = self.vm.os_type_id
+
+        self.osType = self.vm.os_type_id
 
         self.session = self.vm.create_session()
         self.guestsession = False

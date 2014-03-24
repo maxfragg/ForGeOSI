@@ -23,6 +23,6 @@ setup(
     long_description=open('README.md').read(),
     license="GNU GPL v3",
     zip_safe=False,
-    install_requires = ['virtualbox', 'enum34', 'decorator'],
+    install_requires = ['pyvbox', 'enum34', 'decorator'],
     platforms=['cygwin', 'linux'],
 )
