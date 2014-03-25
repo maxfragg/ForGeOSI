@@ -4,6 +4,15 @@
 # By Maximilian Krueger
 # [maximilian.krueger@fau.de]
 #
+# Automated testcase runner and limited preevaluation to save diskspace
+# Requires vboxmanage, the sleuth kit including fiwalk and idifference
+#
+
+
+if [[ $1 == '-h' || $1 == '--help' ]]; then
+	echo "usage: ./runtest.sh -m <machine> -t <testcase> -o <output dir> -n <number of runs>"
+	exit
+fi
 
 while [[ $# > 1 ]]
 do
@@ -34,8 +43,18 @@ case $key in
 esac
 done
 
+mkdir -p "$OUTPUT"
+
+BASE_DISK_UUID=`vboxmanage showvminfo $MACHINE | grep "SATA (0, 0)" | cut -d'{' -f2 | cut -d'}' -f1`
+
+vboxmanage clonehd --format RAW "$BASE_DISK_UUID" "$OUTPUT/base.img"
+
 for i in `seq $RUNS` ; do
 	
-	mkdir -p "$OUTPUT$i"
-	./testcase.py -m "$MACHINE" -t "$TESTCASE" -o "$OUTPUT$i" -r "$i" -v
+	mkdir -p "$OUTPUT/$i"
+	./testcase.py -m "$MACHINE" -t "$TESTCASE" -o "$OUTPUT/$i" -r "$i" -v
+
+	python3 ~/git/dfxml/python/idifference.py --noatime "$OUTPUT/base.img" "$OUTPUT/$i/disk.img" > "$OUTPUT/$i/idiff.log"
+
+	#rm "$OUTPUT/$i/disk.img"
 done

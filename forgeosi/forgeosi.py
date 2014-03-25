@@ -324,7 +324,7 @@ class Vbox():
 
     @check_stopped
     def export(self, path="/tmp/disk.vdi",
-        controller=ControllerType.SATA, port=0, disk=0, raw=True, wait=True):
+        controller=ControllerType.SATA, port=0, disk=0, raw=False, wait=True):
         """Export a VirtualBox hard disk image
 
         By default, it will export the first disk on the sata controller, which
@@ -344,23 +344,26 @@ class Vbox():
 
         self.lock()
 
-        clone_hdd = self.vb.create_hard_disk("", path)
         cur_hdd = self.session.machine.get_medium(controller.name, port, disk)
 
         if raw:
-            variant = virtualbox.library.MediumVariant.vmdk_raw_disk
-        else:
-            variant = virtualbox.library.MediumVariant.standard
-
-        progress = cur_hdd.clone_to_base(clone_hdd,
-            [variant])
-
-        if wait:
-            progress.wait_for_completion()
-            clone_hdd.close()
             self.unlock()
+            # the clone_to_base function is broken with this parameter
+            # so as a workaround we use the shell utility vboxmanage instead
+            # variant = virtualbox.library.MediumVariant.vmdk_raw_disk
+            subprocess.check_output(['vboxmanage', 'clonehd', '--format',
+                'RAW',cur_hdd.location,path])
+
         else:
-            return progress
+            clone_hdd = self.vb.create_hard_disk("", path)
+            variant = virtualbox.library.MediumVariant.standard
+            progress = cur_hdd.clone_to_base(clone_hdd, [variant])
+            if wait:
+                progress.wait_for_completion()
+                clone_hdd.close()
+                self.unlock()
+            else:
+                return progress
 
     @check_running
     def dump_memory(self, path="/tmp/dump.elf"):

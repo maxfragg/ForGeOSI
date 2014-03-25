@@ -143,5 +143,6 @@ Documentation can be found in __docs/__ after building with `doxygen doxygen.con
 
 ###Known bugs and limitations
 * Python 3 compability needs to be tested
+* raw-disk-export in the python API is broken, I'm using vboxmanage instead
 * Running programs in Windows guests with '-' in arguments, breaks things, be careful with that.
 * limited support for Windows hosts

@@ -15,8 +15,10 @@ import hashlib
 import os
 from lxml import etree
 
-_ignore = ['time', 'up_time', 'time_rate', 'real_time']
 
+_ignore = ['time', 'up_time', 'time_rate', 'real_time', 'process', 'pid']
+"""Ignore time output to enable easier comparison of multiple runs
+"""
 
 def toXML(classElement, **kwargs):
     """creates a xml representation of a given object
@@ -102,7 +104,7 @@ class LogCdMount():
 
     def get_entry(self):
         return {'path': self.path, 'real_time': self.real_time,
-            'time': self.time, 'time_rate': self.time_rate, 
+            'time': self.time, 'time_rate': self.time_rate,
             'up_time': self.up_time}
 
     def cleanup(self):

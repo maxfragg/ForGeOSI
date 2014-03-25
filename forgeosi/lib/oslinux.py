@@ -154,7 +154,7 @@ class osLinux():
         """
         self.run_shell_cmd("mv "+source+" "+destination)
 
-    def make_dir(self, path="/tmp/test"):
+    def make_dir(self, path="/home/default/test"):
         """Creates a directory on the guest
 
         Arguments:
@@ -176,7 +176,7 @@ class osLinux():
             + "\nsleep_hack\n" + sudopassword+"\nsleep_hack\n"+password+"\n")
 
 
-    def download_file(self, url, destination="/tmp/test/image.jpg"):
+    def download_file(self, url, destination="/home/default/test/image.jpg"):
         """Download file using wget
 
         Arguments:
@@ -193,7 +193,7 @@ class osLinux():
         as a propper webserver, unlike netcat.
 
         Arguments:
-            directory - a directory to be served, including subdirectories, 
+            directory - a directory to be served, including subdirectories,
                 default is ~
             port - needs to be over 1000, default is 8080
         """

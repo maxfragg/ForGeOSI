@@ -24,11 +24,14 @@ def run(vm, output, verbose, run):
     vbox.keyboard_input("12345\n")
     vbox.create_guest_session()
     vbox.os.open_browser("https://en.wikipedia.org/wiki/Rhinoceros")
-    time.sleep(10)
+    time.sleep(20)
     vbox.take_screenshot(output+"/screenshot.png")
     vbox.os.make_dir()
     vbox.os.download_file(url=
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
+    time.sleep(30)
     vbox.stop()
+    if verbose:
+        print "machine stopped"
     vbox.log.write_log(output+"/log.xml")
-    vbox.export(path=output+"/disk.vdi")
+    vbox.export(path=output+"/disk.img")
