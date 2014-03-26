@@ -13,7 +13,7 @@ import forgeosi
 
 
 def run(vm, output, verbose, run):
-    """testcase 1
+    """testcase 1 for linux
 
     starts a vm, enters password, opens webbrowser, creates directory
     and saves an image file
@@ -34,4 +34,4 @@ def run(vm, output, verbose, run):
     if verbose:
         print "machine stopped"
     vbox.log.write_log(output+"/log.xml")
-    vbox.export(path=output+"/disk.img")
+    vbox.export(path=output+"/disk.img", raw=True)

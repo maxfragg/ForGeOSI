@@ -11,18 +11,34 @@ sys.path.append('../')
 
 import forgeosi
 
+source_path = '/media/MyCD'
+dest_path = '/home/default/test'
+
 
 def run(vm, output, verbose, run):
     """testcase 2
 
-
+    Tests mount cd and copying of files from this cd and copying files from and
+    the vm and cleanup
     """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
-    vbox.start()
+    vbox.start(session_type=forgeosi.SessionType.gui)
     time.sleep(10)
-    vbox.keybord_input("12345\n")
+    vbox.keyboard_input("12345\n")
     vbox.create_guest_session()
+    vbox.umount_cd()
+    vbox.mount_folder_as_cd(folder_path="/home/maxfragg/images")
+    time.sleep(20)
+    vbox.os.make_dir(dest_path)
+    vbox.os.copy_file(source=source_path+'/*', destination=dest_path+'/')
+    time.sleep(10)
+    vbox.umount_cd()
+    vbox.copy_from_vm(source=dest_path+'/nashorn_baby_01.jpg',
+        dest=output+'/nashorn_baby_01.jpg')
 
     vbox.stop()
+    if verbose:
+        print "machine stopped"
     vbox.log.write_log(output+"/log.xml")
-    vbox.export(path=output+"/disk.vdi")
+    vbox.export(path=output+"/disk.img", raw=True)
+    vbox.cleanup_and_delete

@@ -32,7 +32,8 @@ installed in the VM and the keyboard layout needs to match the one, of the host
 PC, otherwise keyboard input might not match expectations.
 The hostname and the VM name of the base-vm also need to match for simplicity
 osLinux and osWindows both have special additional requirements, which are
-described in Vbox.os
+described in Vbox.os. Automatic login of users is strongly encouraged, even
+though it is not nessesary
 
 The VM host system needs to be a Linux system for some things, since it uses
 genisoimage and relies on "/tmp/" being a valid path on the host.
@@ -203,6 +204,7 @@ class Vbox():
             self.is_clone = True
         elif mode == VboxMode.use:
             self.vm = self.vb.find_machine(basename)
+            self.is_clone = False
 
         self.osType = self.vm.os_type_id
 
@@ -212,6 +214,7 @@ class Vbox():
         self.running = False
         self.speedup = 100
         self.offset = 0
+        self.medium = False
 
         self.log = logger.Logger()
         self.log.add_vm(clonename, basename, self.osType)
@@ -351,6 +354,7 @@ class Vbox():
             # the clone_to_base function is broken with this parameter
             # so as a workaround we use the shell utility vboxmanage instead
             # variant = virtualbox.library.MediumVariant.vmdk_raw_disk
+            print(cur_hdd.location)
             subprocess.check_output(['vboxmanage', 'clonehd', '--format',
                 'RAW',cur_hdd.location,path])
 
@@ -543,7 +547,7 @@ class Vbox():
             virtualbox.library.DeviceType.dvd,
             virtualbox.library.AccessMode.read_only, False)
         self.session.machine.mount_medium(ControllerType.IDE.name,1,0,self.medium,
-            False)
+            True)
 
         self.log.add_cd(path, remove_image, time_offset=self.offset,
             time_rate=self.speedup)
@@ -554,8 +558,9 @@ class Vbox():
         """Removes a cd from the emulated IDE CD-drive
         """
         self.session.machine.mount_medium(ControllerType.IDE.name, 1, 0,
-            virtualbox.library.IMedium(),False)
-        self.medium.close()
+            virtualbox.library.IMedium(),True)
+        if self.medium:
+            self.medium.close()
 
 
     @check_running
@@ -674,7 +679,7 @@ class Vbox():
             dest - destination path on the host
         """
 
-        progress = self.guestsession.copy_from(source, destination)
+        progress = self.guestsession.copy_from(source, dest)
 
         if wait:
             progress.wait_for_completion()

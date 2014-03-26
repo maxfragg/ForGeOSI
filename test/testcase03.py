@@ -13,7 +13,10 @@ import forgeosi
 
 
 def run(vm, output, verbose, run):
+    """testcase 3
 
+
+    """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
     vbox.start()
     time.sleep(10)
@@ -21,5 +24,7 @@ def run(vm, output, verbose, run):
     vbox.create_guest_session()
 
     vbox.stop()
+    if verbose:
+        print "machine stopped"
     vbox.log.write_log(output+"/log.xml")
-    vbox.export(path=output+"/disk.vdi")
+    vbox.export(path=output+"/disk.img", raw=True)

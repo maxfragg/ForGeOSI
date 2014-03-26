@@ -224,7 +224,7 @@ class osWindows():
                     RunMethod.direct - VirtualBox-API, doesn't work on Windows 8
                     RunMethod.shell - Windows Powershell
                     RunMethod.run - Windows run dialog
-                    RunMethod.start - Startmenu
+                    RunMethod.start - Startmenu, depends on view on Windows 8
                 Note: direct will block, until the browser is closed, if no
                 timeout is set!
             timeout - in Milliseconds

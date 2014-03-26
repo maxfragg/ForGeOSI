@@ -43,6 +43,11 @@ case $key in
 esac
 done
 
+if [ -d "$OUTPUT" ]; then
+  echo "$OUTPUT already exists, please choose new directory"
+  exit
+fi
+
 mkdir -p "$OUTPUT"
 
 BASE_DISK_UUID=`vboxmanage showvminfo $MACHINE | grep "SATA (0, 0)" | cut -d'{' -f2 | cut -d'}' -f1`
@@ -56,5 +61,5 @@ for i in `seq $RUNS` ; do
 
 	python3 ~/git/dfxml/python/idifference.py --noatime "$OUTPUT/base.img" "$OUTPUT/$i/disk.img" > "$OUTPUT/$i/idiff.log"
 
-	#rm "$OUTPUT/$i/disk.img"
+	rm "$OUTPUT/$i/disk.img"
 done
