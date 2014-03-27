@@ -11,7 +11,8 @@
 import sys
 import getopt
 from time import gmtime, strftime
-import testcase01
+import testcase01linux
+import testcase01win
 import testcase02
 import testcase03
 
@@ -55,14 +56,18 @@ def main(argv):
         print '\tout:'+out
         print '\ttestcase: '+testcase
 
-    if testcase in ("01", "testcase01"):
-        tc = testcase01
+    if testcase in ("01l", "testcase01linux"):
+        tc = testcase01linux
+    elif testcase in ("01w", "testcase01win"):
+        tc = testcase01win
     elif testcase in ("02", "testcase02"):
         tc = testcase02
     elif testcase in ("03", "testcase03"):
         tc = testcase03
 
     timestamp = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
+
+    print vm +" "+out+" "+timestamp+"_"+vm+"_"+str(run)
 
     tc.run(vm=vm, output=out, verbose=verbose,
         run=timestamp+"_"+vm+"_"+str(run))

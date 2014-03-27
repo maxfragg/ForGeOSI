@@ -45,7 +45,7 @@ done
 
 if [ -d "$OUTPUT" ]; then
   echo "$OUTPUT already exists, please choose new directory"
-  exit
+  #exit
 fi
 
 mkdir -p "$OUTPUT"

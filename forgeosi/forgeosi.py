@@ -354,7 +354,7 @@ class Vbox():
             # the clone_to_base function is broken with this parameter
             # so as a workaround we use the shell utility vboxmanage instead
             # variant = virtualbox.library.MediumVariant.vmdk_raw_disk
-            print(cur_hdd.location)
+
             subprocess.check_output(['vboxmanage', 'clonehd', '--format',
                 'RAW',cur_hdd.location,path])
 
@@ -396,24 +396,34 @@ class Vbox():
         f.write(png)
 
 
-    @check_running
     def start_video(self, path="/tmp/video.webm"):
         """Record video of VM-Screen
 
         Arguments:
             path - path to the video file on the host, format .webm
         """
+        if not self.running:
+            self.lock()
+
         self.session.machine.video_capture_file = path
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
 
+        if not self.running:
+            self.unlock()
 
-    @check_running
+
     def stop_video(self):
         """Stop video recording
         """
+        if not self.running:
+            self.lock()
+
         self.session.machine.video_capture_enabled = False
         self.session.machine.save_settings()
+
+        if not self.running:
+            self.unlock()
 
 
     @check_running
@@ -444,7 +454,6 @@ class Vbox():
         self.speedup = speedup
 
 
-    @check_running
     def start_network_trace(self, path="/tmp/trace.pcap", adapter=0):
         """Trace network traffic on a certain network adapter
 
@@ -453,29 +462,40 @@ class Vbox():
             adapter - internal number of the network adapter, range 0-
         """
 
-        self.network = session.machine.get_network_adapter(adapter)
+        if not self.running:
+            self.lock()
+
+        self.network = self.session.machine.get_network_adapter(adapter)
 
         self.network.trace_file = path
         self.network.trace_enabled = True
         self.session.machine.save_settings()
 
+        if not self.running:
+            self.unlock()
 
-    @check_running
+
     def stop_network_trace(self, adapter=0):
         """Stop network trace for one adapter
 
         Arguments:
             adapter - internal number of the network adapter, range 0-7
         """
+        if not self.running:
+            self.lock()
 
         self.network = session.machine.get_network_adapter(adapter=0)
 
         self.network.trace_enabled = False
         self.session.machine.save_settings()
 
+        if not self.running:
+            self.unlock()
+
 
     @check_running
-    def create_guest_session(self, username="default", password="12345"):
+    def create_guest_session(self, username="default", password="12345",
+            wait=True):
         """creates a guest session for issuing commands to the guest system
 
         While the VirtualBox API would support up to 256 simultaneous guest
@@ -490,8 +510,16 @@ class Vbox():
         self.username = username
         self.password = password
 
-        self.guestsession = self.session.console.guest.create_session(self.username,
-            self.password)
+        if wait:
+            while not self.guestsession:
+                try:
+                    self.guestsession = self.session.console.guest.create_session(
+                        self.username, self.password)
+                except:
+                    pass
+        else:
+            self.guestsession = self.session.console.guest.create_session(
+                self.username, self.password)
 
         #use vm property to find systemtype
         #we create the self.os at this point, because it needs a running guest
