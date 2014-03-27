@@ -329,6 +329,15 @@ class Logger():
                 warn += (l.warning)+'\n'
         return warn
 
+    def get_log_by_type(self, logtype):
+        """Fast way to check for warnings
+        """
+
+        partial_log = []
+        for l in self.log:
+            if isinstance(l, logtype):
+                partial_log.append(l.to_xml())
+        return partial_log
 
     def get_xml_log(self):
         """Returns XML representation of the log
@@ -346,7 +355,51 @@ class Logger():
             for key in entry:
                 ret += "\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
         return ret
+        
+    def get_structured_xml_log(self):
+        root = self.get_log_by_type(LogVM)[0]
 
+        node = etree.Element('processes')
+        for subnode in self.get_log_by_type(LogProcess):
+            node.append(subnode)
+        root.append(node)
+
+        node = etree.Element('cdmounts')
+        for subnode in self.get_log_by_type(LogCdMount):
+            node.append(subnode)
+        root.append(node)
+
+
+        node = etree.Element('copiedfile')
+        for subnode in self.get_log_by_type(LogCopiedFile):
+            node.append(subnode)
+        root.append(node)
+
+
+        node = etree.Element('encodedcommands')
+        for subnode in self.get_log_by_type(LogEncodedCommand):
+            node.append(subnode)
+        root.append(node)
+
+
+        node = etree.Element('mice')
+        for subnode in self.get_log_by_type(LogMouse):
+            node.append(subnode)
+        root.append(node)
+
+
+        node = etree.Element('keyboards')
+        for subnode in self.get_log_by_type(LogRawKeyboard):
+            node.append(subnode)
+        root.append(node)
+
+        node = etree.Element('warnings')
+        for subnode in self.get_log_by_type(LogWarning):
+            node.append(subnode)
+        root.append(node)
+        print root, type(root)
+
+        return etree.tostring(root, pretty_print=True)
 
     def write_log(self, path):
         """Writes the xml formated log to a file
