@@ -355,51 +355,28 @@ class Logger():
             for key in entry:
                 ret += "\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
         return ret
-        
+
+
     def get_structured_xml_log(self):
         root = self.get_log_by_type(LogVM)[0]
 
-        node = etree.Element('processes')
-        for subnode in self.get_log_by_type(LogProcess):
-            node.append(subnode)
-        root.append(node)
+        elements = {'processes': LogProcess, 'cdmounts': LogCdMount,
+            'copiedfile': LogCopiedFile, 'encodedcommands': LogEncodedCommand,
+            'mice': LogMouse, 'keyboards': LogRawKeyboard,
+            'warnings': LogWarning}
 
-        node = etree.Element('cdmounts')
-        for subnode in self.get_log_by_type(LogCdMount):
-            node.append(subnode)
-        root.append(node)
-
-
-        node = etree.Element('copiedfile')
-        for subnode in self.get_log_by_type(LogCopiedFile):
-            node.append(subnode)
-        root.append(node)
-
-
-        node = etree.Element('encodedcommands')
-        for subnode in self.get_log_by_type(LogEncodedCommand):
-            node.append(subnode)
-        root.append(node)
-
-
-        node = etree.Element('mice')
-        for subnode in self.get_log_by_type(LogMouse):
-            node.append(subnode)
-        root.append(node)
-
-
-        node = etree.Element('keyboards')
-        for subnode in self.get_log_by_type(LogRawKeyboard):
-            node.append(subnode)
-        root.append(node)
-
-        node = etree.Element('warnings')
-        for subnode in self.get_log_by_type(LogWarning):
-            node.append(subnode)
-        root.append(node)
-        print root, type(root)
+        for log_type in elements:
+            node = etree.Element(log_type)
+            empty = True
+            for subnode in self.get_log_by_type(elements[log_type]):
+                if subnode is not None:
+                    empty = False    
+                node.append(subnode)
+            if not empty:
+                root.append(node)
 
         return etree.tostring(root, pretty_print=True)
+
 
     def write_log(self, path):
         """Writes the xml formated log to a file
