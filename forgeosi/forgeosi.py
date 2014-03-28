@@ -875,8 +875,18 @@ class Vbox():
         #for clones we also remove the vm data of the clone and the
         #hdd, to not clutter
         if self.is_clone and rm_clone:
-            hdd = self.vm.remove()
+            self.unlock()
+
+            hdds = []
+
+            for disk in self.vb.hard_disks:
+                if self.vm.id_p in disk.machine_ids:
+                    hdd.append(disk)
+
+            self.vm.remove()
+
             #if the hdd is not attached to any other vm, it is save to remove it
             # as well
-            if not hdd.machine_ids:
-                hdd.delete_storage()
+            for disk in hdds:
+                if not disk.machine_ids:
+                    hdd.delete_storage()
