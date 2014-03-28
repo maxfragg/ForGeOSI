@@ -271,12 +271,11 @@ class _LogInterface():
 
 
 class Logger():
-    """A simple logger for fopybox
+    """A simple logger for ForGeOSI
 
     This logger creates a protocol of actions performed with pyvbox, that
-    altered the virtual machine image. XML-export is available with get_log and
-    write_log
-
+    altered the virtual machine image. XML-export is available with 
+    get_xml_log, get_structured_xml_log and write_xml_log.
     """
 
     def __init__(self):
@@ -341,9 +340,14 @@ class Logger():
 
     def get_xml_log(self):
         """Returns XML representation of the log
+
+        in the original order of actions 
         """
+        ret = "<log>\n"
         for l in self.log:
-            print(etree.tostring(l.to_xml(), pretty_print=True))
+            ret += etree.tostring(l.to_xml(), pretty_print=True)
+        return ret + "</log>\n"
+
 
     def get_pretty_log(self):
         """Returns human readable log
@@ -358,6 +362,10 @@ class Logger():
 
 
     def get_structured_xml_log(self):
+        """Returns XML representation of the log
+
+        actions are grouped by type
+        """
         root = self.get_log_by_type(LogVM)[0]
 
         elements = {'processes': LogProcess, 'cdmounts': LogCdMount,
@@ -378,12 +386,11 @@ class Logger():
         return etree.tostring(root, pretty_print=True)
 
 
-    def write_log(self, path):
+    def write_xml_log(self, path):
         """Writes the xml formated log to a file
         """
         f = open(path, 'wb')
-        for l in self.log:
-            f.write(etree.tostring(l.to_xml(), pretty_print=True))
+        f.write(self.get_xml_log())
 
 
     def cleanup(self):

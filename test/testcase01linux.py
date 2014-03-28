@@ -33,5 +33,5 @@ def run(vm, output, verbose, run):
     vbox.stop()
     if verbose:
         print "machine stopped"
-    vbox.log.write_log(output+"/log.xml")
+    vbox.log.write_xml_log(output+"/log.xml")
     vbox.export(path=output+"/disk.img", raw=True)
