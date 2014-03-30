@@ -512,6 +512,7 @@ class Vbox():
 
         if wait:
             while not self.guestsession:
+                time.sleep(5)
                 try:
                     self.guestsession = self.session.console.guest.create_session(
                         self.username, self.password)
@@ -574,8 +575,8 @@ class Vbox():
         self.medium = self.vb.open_medium(path,
             virtualbox.library.DeviceType.dvd,
             virtualbox.library.AccessMode.read_only, False)
-        self.session.machine.mount_medium(ControllerType.IDE.name,1,0,self.medium,
-            True)
+        self.session.machine.mount_medium(ControllerType.IDE.name, 1, 0, 
+            self.medium, True)
 
         self.log.add_cd(path, remove_image, time_offset=self.offset,
             time_rate=self.speedup)
