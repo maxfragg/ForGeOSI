@@ -144,6 +144,7 @@ def check_guestsession(func, *args, **kwargs):
         return
     return func(*args, **kwargs)
 
+
 @decorator
 def lock_if_not_running(func, *args, **kwargs):
     """decorator for use inside Vbox class only!
@@ -156,6 +157,7 @@ def lock_if_not_running(func, *args, **kwargs):
     if not args[0].running:
         args[0].unlock()
     return ret
+
 
 class Vbox():
     """base class for controlling VirtualBox
@@ -441,11 +443,11 @@ class Vbox():
             offset - time in seconds
         """
 
-        self.session.machine.bios_settings.time_offset = offset * 1000
-        self.offset = offset * 1000
+        self.session.machine.bios_settings.time_offset = offset * 1000L
+        self.offset = offset * 1000L
 
 
-    @lock_if_not_running
+    @check_running
     def set_time_speedup(self, speedup=100):
         """Sets relative speed time runs in the vm
 
