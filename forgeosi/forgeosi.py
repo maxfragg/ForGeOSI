@@ -33,7 +33,7 @@ PC, otherwise keyboard input might not match expectations.
 The hostname and the VM name of the base-vm also need to match for simplicity
 osLinux and osWindows both have special additional requirements, which are
 described in Vbox.os. Automatic login of users is strongly encouraged, even
-though it is not nessesary
+though it is not necessary
 
 The VM host system needs to be a Linux system for some things, since it uses
 genisoimage and relies on "/tmp/" being a valid path on the host.
@@ -130,7 +130,7 @@ def check_stopped(func, *args, **kwargs):
     if args[0].running:
         print("Machine needs to be stopped")
         return
-    func(*args, **kwargs)
+    return func(*args, **kwargs)
 
 
 @decorator
@@ -142,8 +142,20 @@ def check_guestsession(func, *args, **kwargs):
     if not args[0].guestsession:
         print("needs guestsession")
         return
-    func(*args, **kwargs)
+    return func(*args, **kwargs)
 
+@decorator
+def lock_if_not_running(func, *args, **kwargs):
+    """decorator for use inside Vbox class only!
+
+    locks and unlocks vm, if it is not running
+    """
+    if not args[0].running:
+        args[0].lock()
+    ret = func(*args, **kwargs)
+    if not args[0].running:
+        args[0].unlock()
+    return ret
 
 class Vbox():
     """base class for controlling VirtualBox
@@ -369,6 +381,7 @@ class Vbox():
             else:
                 return progress
 
+
     @check_running
     def dump_memory(self, path="/tmp/dump.elf"):
         """Creates a memory dump in 64bit elf format
@@ -379,6 +392,7 @@ class Vbox():
             path - path to the dump, format .elf
         """
         self.session.console.debugger.dump_guest_core(path, "")
+
 
     @check_running
     def take_screenshot(self, path="/tmp/screenshot.png"):
@@ -396,37 +410,29 @@ class Vbox():
         f.write(png)
 
 
+    @lock_if_not_running
     def start_video(self, path="/tmp/video.webm"):
         """Record video of VM-Screen
 
         Arguments:
             path - path to the video file on the host, format .webm
         """
-        if not self.running:
-            self.lock()
 
         self.session.machine.video_capture_file = path
         self.session.machine.video_capture_enabled = True
         self.session.machine.save_settings()
 
-        if not self.running:
-            self.unlock()
 
-
+    @lock_if_not_running
     def stop_video(self):
         """Stop video recording
         """
-        if not self.running:
-            self.lock()
 
         self.session.machine.video_capture_enabled = False
         self.session.machine.save_settings()
 
-        if not self.running:
-            self.unlock()
 
-
-    @check_running
+    @lock_if_not_running
     def set_time_offset(self, offset=0):
         """Sets a time offset in seconds
         Default resets.
@@ -439,7 +445,7 @@ class Vbox():
         self.offset = offset * 1000
 
 
-    @check_running
+    @lock_if_not_running
     def set_time_speedup(self, speedup=100):
         """Sets relative speed time runs in the vm
 
@@ -454,6 +460,7 @@ class Vbox():
         self.speedup = speedup
 
 
+    @lock_if_not_running
     def start_network_trace(self, path="/tmp/trace.pcap", adapter=0):
         """Trace network traffic on a certain network adapter
 
@@ -462,35 +469,25 @@ class Vbox():
             adapter - internal number of the network adapter, range 0-
         """
 
-        if not self.running:
-            self.lock()
-
         self.network = self.session.machine.get_network_adapter(adapter)
 
         self.network.trace_file = path
         self.network.trace_enabled = True
         self.session.machine.save_settings()
 
-        if not self.running:
-            self.unlock()
 
-
+    @lock_if_not_running
     def stop_network_trace(self, adapter=0):
         """Stop network trace for one adapter
 
         Arguments:
             adapter - internal number of the network adapter, range 0-7
         """
-        if not self.running:
-            self.lock()
 
         self.network = session.machine.get_network_adapter(adapter=0)
 
         self.network.trace_enabled = False
         self.session.machine.save_settings()
-
-        if not self.running:
-            self.unlock()
 
 
     @check_running
