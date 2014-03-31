@@ -328,8 +328,9 @@ class Logger():
                 warn += (l.warning)+'\n'
         return warn
 
-    def get_log_by_type(self, logtype):
-        """Fast way to check for warnings
+
+    def get_xml_log_by_type(self, logtype):
+        """Fast way to check for entry of one type
         """
 
         partial_log = []
@@ -337,6 +338,17 @@ class Logger():
             if isinstance(l, logtype):
                 partial_log.append(l.to_xml())
         return partial_log
+
+
+    def get_log_object_by_type(self, logtype):
+        """Gets all log objects of one type
+        """
+        ret = []
+        for l in self.log:
+            if isinstance(l, logtype):
+                ret.append(l)
+        return ret
+
 
     def get_xml_log(self):
         """Returns XML representation of the log
@@ -366,7 +378,7 @@ class Logger():
 
         actions are grouped by type
         """
-        root = self.get_log_by_type(LogVM)[0]
+        root = self.get_xml_log_by_type(LogVM)[0]
 
         elements = {'processes': LogProcess, 'cdmounts': LogCdMount,
             'copiedfile': LogCopiedFile, 'encodedcommands': LogEncodedCommand,
@@ -376,7 +388,7 @@ class Logger():
         for log_type in elements:
             node = etree.Element(log_type)
             empty = True
-            for subnode in self.get_log_by_type(elements[log_type]):
+            for subnode in self.get_xml_log_by_type(elements[log_type]):
                 if subnode is not None:
                     empty = False    
                 node.append(subnode)

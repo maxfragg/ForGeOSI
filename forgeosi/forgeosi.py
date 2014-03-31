@@ -118,7 +118,7 @@ def check_running(func, *args, **kwargs):
     if not args[0].running:
         print("Machine needs to be running")
         return
-    func(*args, **kwargs)
+    return func(*args, **kwargs)
 
 
 @decorator
@@ -140,8 +140,8 @@ def check_guestsession(func, *args, **kwargs):
     ensures that the vm has a guestsession created
     """
     if not args[0].guestsession:
-        print("needs guestsession")
-        return
+        args[0].create_guest_session()
+
     return func(*args, **kwargs)
 
 
@@ -224,6 +224,7 @@ class Vbox():
 
         self.session = self.vm.create_session()
         self.guestsession = False
+        self.os = False
         self.basename = basename
         self.running = False
         self.speedup = 100
@@ -594,7 +595,7 @@ class Vbox():
     @check_running
     @check_guestsession
     def run_process(self, command, arguments=[], stdin='', key_input='',
-            environment=[], native_input=False, timeout=0, wait_time=10, 
+            environment=[], native_input=False, timeout=0, wait_time=10,
             wait=True):
         """Runs a process with arguments and stdin in the VM
 
@@ -620,6 +621,9 @@ class Vbox():
             wait - selects if the process should be created synchronous with
                 input or if this function will return, while the process inside
                 the VM is still running
+
+        Returns:
+            pid, stdout, stdin
         """
 
         stdin = ""  # stdin input is broken in pyvbox!
@@ -656,7 +660,27 @@ class Vbox():
             stdout, stderr, process.pid, time_offset=self.offset,
             time_rate=self.speedup)
 
-        return stdout, stderr
+        return process.pid, stdout, stderr
+
+
+    @check_running
+    @check_guestsession
+    def kill_and_check_output(self, pid=0, timeout=0):
+        """Kills a process started with run_process(wait=True)
+
+        collects output written by this process after killing it
+
+        Arguments:
+            pid - process-id of the process to kill
+            timeout - timeout in milliseconds
+        """
+        plist = self.log.get_log_object_by_type(logger.LogProcess)
+
+        po = [a for a in plist if a.pid == pid][0]
+
+        po.process.terminate()
+        po.stdin += po.process.read(1, 65000, timeout)
+        po.stdin += po.process.read(1, 65000, timeout)
 
 
     @check_running
@@ -849,6 +873,9 @@ class Vbox():
 
         Arguments:
             adapter - internal number of the network adapter, range 0-7
+
+        Returns:
+            ip-address
         """
 
         return self.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
