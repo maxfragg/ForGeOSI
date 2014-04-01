@@ -708,7 +708,7 @@ class Vbox():
             dest - destination path in the vm
         """
 
-        progress = self.guestsession.copy_to(source, destination, [])
+        progress = self.guestsession.copy_to(source, dest, [])
 
         self.log.add_file(source=source, destination=dest,
             time_offset=self.offset, time_rate=self.speedup)

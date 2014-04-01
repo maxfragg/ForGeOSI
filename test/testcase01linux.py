@@ -19,14 +19,19 @@ def run(vm, output, verbose, run):
     and saves an image file
     """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
-    vbox.start()
+    vbox.start(session_type=forgeosi.SessionType.headless)
     time.sleep(10)
-    vbox.keyboard_input("12345\n")
+    if verbose:
+        print "creating guest session"
     vbox.create_guest_session()
+    if verbose:
+        print "opening webbrowser"
     vbox.os.open_browser("https://en.wikipedia.org/wiki/Rhinoceros")
     time.sleep(20)
     vbox.take_screenshot(output+"/screenshot.png")
     vbox.os.make_dir()
+    if verbose:
+        print "downloading picture"    
     vbox.os.download_file(url=
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
     time.sleep(30)

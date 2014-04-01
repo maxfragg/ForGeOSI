@@ -63,3 +63,5 @@ for i in `seq $RUNS` ; do
 
 	rm "$OUTPUT/$i/disk.img"
 done
+
+rm "$OUTPUT/base.img"
