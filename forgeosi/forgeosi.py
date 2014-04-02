@@ -97,10 +97,11 @@ class VboxConfig():
             self.dhcp = self.vb.find_dhcp_server_by_network_name(network_name)
 
         except:
-            self.net = vb.create_nat_network(network_name)
-            self.dhcp = vb.create_dhcp_server(network_name)
+            self.net = self.vb.create_nat_network(network_name)
+            self.dhcp = self.vb.create_dhcp_server(network_name)
 
         self.net.enabled = True
+        self.dhcp.enabled = True
         self.network_name = network_name
         return self.net
 
@@ -487,7 +488,7 @@ class Vbox():
             adapter - internal number of the network adapter, range 0-7
         """
 
-        self.network = session.machine.get_network_adapter(adapter=0)
+        self.network = self.session.machine.get_network_adapter(adapter=0)
 
         self.network.trace_enabled = False
         self.session.machine.save_settings()
@@ -861,6 +862,11 @@ class Vbox():
         #allow VMs to see each other
         self.network.promisc_mode_policy = virtualbox.library.NetworkAdapterPromiscModePolicy.allow_network
         self.network.enabled = True
+        # to ensure the vm notices the network changes, we remove the cable for 
+        # 5 seconds
+        self.network.cable_connected = False
+        time.sleep(5)
+        self.network.cable_connected = True
         self.session.machine.save_settings()
 
 

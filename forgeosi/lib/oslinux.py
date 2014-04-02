@@ -198,7 +198,7 @@ class osLinux():
             port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-            + str(port))
+            + str(port)+"&")
 
 
     def open_browser(self, url="www.google.com", method=RunMethod.direct):
