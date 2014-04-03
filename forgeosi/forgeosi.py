@@ -812,7 +812,7 @@ class Vbox():
                 if s in make_codes:
                     # the api only likes baseintegers, but hex codes are, what
                     # everybody uses for make/break codes, so this conversion is
-                    # needed
+                    # needed, using int()
                     self.session.console.keyboard.put_scancodes(
                         [int(x) for x in make_codes[s]])
                     self.log.add_keyboard("makecode: "+str(s),
@@ -914,6 +914,7 @@ class Vbox():
 
         self.session.machine.set_cpu_property(
             virtualbox.library.CPUPropertyType.synthetic, True)
+
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):

@@ -27,10 +27,16 @@ def run(vm, output, verbose, run):
     vbox_c2 = forgeosi.Vbox(basename=vm, clonename="testrun"+run+"client2")
     vbox_c3 = forgeosi.Vbox(basename=vm2, clonename="testrun"+run+"client3")
     vbox_s = forgeosi.Vbox(basename=vm, clonename="testrun"+run+"server")
-    vbox_c1.start(wait=False)
-    vbox_c2.start(wait=False)
-    vbox_c3.start(wait=False)
-    vbox_s.start()
+    p_c1 = vbox_c1.start(wait=False)
+    p_c2 = vbox_c2.start(wait=False)
+    p_c3 = vbox_c3.start(wait=False)
+    p_s = vbox_s.start(wait=False)
+    
+    p_c1.wait_for_completion()
+    p_c2.wait_for_completion()
+    p_c3.wait_for_completion()
+    p_s.wait_for_completion()
+
     time.sleep(10)
 
     vbox_c1.create_guest_session()
