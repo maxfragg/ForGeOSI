@@ -21,24 +21,24 @@ IGNORE = ['time', 'up_time', 'time_rate', 'real_time', 'process', 'pid']
 """
 
 
-def toXML(classElement, **kwargs):
+def object_to_xml(class_element, **kwargs):
     """creates a xml representation of a given object
     """
     if 'nodeName' in kwargs:
-        nodeName = kwargs['nodeName']
+        node_name = kwargs['nodeName']
     else:
-        nodeName = "Node"
+        node_name = "Node"
 
     if 'ignore' in kwargs:
         ignore = kwargs['ignore']
     else:
         ignore = []
 
-    node = etree.Element(nodeName)
-    for i in classElement.__dict__:
+    node = etree.Element(node_name)
+    for i in class_element.__dict__:
         if i not in ignore:
             xml = etree.Element(i)
-            xml.text = str(classElement.__dict__[i])
+            xml.text = str(class_element.__dict__[i])
             node.append(xml)
     return node
 
@@ -51,7 +51,7 @@ class LogCopiedFile():
         self.source = source
         self.destination = destination
         self.tmp = self.copy_to_temp()
-        self.md5Sum = self.calc_md5sum()
+        self.md5sum = self.calc_md5sum()
         self.sha256sum = self.calc_sha256sum()
         self.filesize = self.get_file_size()
         self.real_time = time.time()
@@ -60,33 +60,43 @@ class LogCopiedFile():
         self.up_time = up_time
 
     def get_file_size(self):
+        """local file size to compare to file size in vm
+        """
         filesize = os.path.getsize(self.tmp)
         return filesize
 
     def copy_to_temp(self):
+        """copy file to temp for later usage
+        """
         tmp = '/tmp/%s.forensig20' % str(uuid.uuid4())
         shutil.copy(self.source, tmp)
         return tmp
 
     def calc_md5sum(self):
+        """calculates md5sum of file
+        """
         return hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
 
     def calc_sha256sum(self):
+        """calculates sha256sum of file
+        """
         return hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
 
 
     def get_entry(self):
         return {'source': self.source, 'destination': self.destination,
-                'tmp': self.tmp, 'md5sum': self.md5Sum,
+                'tmp': self.tmp, 'md5sum': self.md5sum,
                 'sha256sum': self.sha256sum, 'filesize': self.filesize,
                 'real_time': self.real_time, 'time': self.time,
                 'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
+        """cleanup copy of file
+        """
         return self.tmp
 
     def to_xml(self):
-        return toXML(self, nodeName="copiedFile", ignore=IGNORE)
+        return object_to_xml(self, nodeName="copiedFile", ignore=IGNORE)
 
 
 class LogCdMount():
@@ -107,13 +117,15 @@ class LogCdMount():
                 'up_time': self.up_time}
 
     def cleanup(self):
+        """clean up only generated cd images
+        """
         if self.delete:
             return self.path
         else:
             return False
 
     def to_xml(self):
-        return toXML(self, nodeName="cd", ignore=IGNORE)
+        return object_to_xml(self, nodeName="cd", ignore=IGNORE)
 
 
 class LogEncodedCommand():
@@ -131,7 +143,7 @@ class LogEncodedCommand():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="ReadableArg")
+        return object_to_xml(self, nodeName="ReadableArg")
 
 
 class LogProcess():
@@ -165,7 +177,7 @@ class LogProcess():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="process", ignore=IGNORE)
+        return object_to_xml(self, nodeName="process", ignore=IGNORE)
 
 
 class LogRawKeyboard():
@@ -187,7 +199,7 @@ class LogRawKeyboard():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="keyboard_input", ignore=IGNORE)
+        return object_to_xml(self, nodeName="keyboard_input", ignore=IGNORE)
 
 
 class LogMouse():
@@ -215,25 +227,25 @@ class LogMouse():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="mouse_input", ignore=IGNORE)
+        return object_to_xml(self, nodeName="mouse_input", ignore=IGNORE)
 
 
 class LogVM():
     """saves general properties of one VM"""
-    def __init__(self, vmname, basename, osType):
+    def __init__(self, vmname, basename, os_type):
         self.vmname = vmname
         self.basename = basename
-        self.osType = osType
+        self.os_type = os_type
 
     def get_entry(self):
         return {'vmname': self.vmname, 'basename': self.basename,
-                'osType': self.osType}
+                'os_type': self.os_type}
 
     def cleanup(self):
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="vm")
+        return object_to_xml(self, nodeName="vm")
 
 
 class LogWarning():
@@ -243,7 +255,6 @@ class LogWarning():
         if verbose:
             print(warning)
 
-
     def get_entry(self):
         return {'warning': self.warning}
 
@@ -251,7 +262,7 @@ class LogWarning():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="warning")
+        return object_to_xml(self, nodeName="warning")
 
 
 class _LogInterface():
@@ -270,7 +281,7 @@ class _LogInterface():
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="log_interface")
+        return object_to_xml(self, nodeName="log_interface")
 
 
 class Logger():
@@ -314,7 +325,7 @@ class Logger():
         """
         self.log.append(LogMouse(*args, **kwargs))
 
-    def add_encodedCommand(self, *args, **kwargs):
+    def add_encoded_command(self, *args, **kwargs):
         """add readable version of encoded commands entry to log
         """
         self.log.append(LogEncodedCommand(*args, **kwargs))

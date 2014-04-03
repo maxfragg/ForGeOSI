@@ -32,23 +32,23 @@ class OSWindows():
         using powershell
     """
 
-    def __init__(self, vb,
+    def __init__(self, vbox,
             term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             home="C:\\Users\\default.windows-8-base\\"):
         """Initializes the osWindows class
 
         Arguments:
-            vb - ForGeOSI.VBox instance
+            vbox - ForGeOSI.VBox instance
             term - path to the default terminal to be used, should be a
                 powershell.exe
             home - home of the default user, used for the guest session
         """
 
-        self.vb = vb
+        self.vbox = vbox
         self.term = term
         self.home = home
         self.cmd = "C:\\Windows\\System32\\cmd.exe"
-        self.ie = "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe"
+        self.browser = "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe"
 
 
     def _base64_encode_command(self, command):
@@ -84,7 +84,7 @@ class OSWindows():
         """check if path parameters contain a '-'
         """
         if '-' in path:
-            self.vb.log.add_warning('The path "'+path+
+            self.vbox.log.add_warning('The path "' + path +
                 '" contains a "-", this is know to cause problems')
 
 
@@ -98,17 +98,17 @@ class OSWindows():
             stop_ps - kill the powershell window after running the command
         """
         if cmd:
-            return self.vb.run_process(command=self.cmd,
-                                       arguments=["/C"]+command)
+            return self.vbox.run_process(command=self.cmd,
+                                         arguments=["/C"]+command)
         else:
             if stop_ps:
                 command += "; stop-process powershell"
-            self.vb.log.add_encodedCommand(command)
+            self.vbox.log.add_encoded_command(command)
             command = self._base64_encode_command(command)
-            return self.vb.run_process(command=self.term,
-                                       arguments=["-OutputFormat", "Text",
-                                                  "-inputformat", "none",
-                                                  "-EncodedCommand", command])
+            return self.vbox.run_process(command=self.term,
+                                         arguments=["-OutputFormat", "Text",
+                                                    "-inputformat", "none",
+                                                    "-EncodedCommand", command])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
@@ -210,7 +210,7 @@ class OSWindows():
         $user.SetInfo()
         [ADSI]$group="WinNT://{0}/Power Users,Group"
         $group.add($user.path)
-        """.format(self.vb.basename, username, password)
+        """.format(self.vbox.basename, username, password)
 
         self.run_shell_cmd(command=command)
 
@@ -250,8 +250,8 @@ class OSWindows():
             raise TypeError("method needs to be of type RunMethod")
 
         if method is RunMethod.direct:
-            self.vb.run_process(command=self.ie, arguments=[url],
-                timeout=timeout)
+            self.vbox.run_process(command=self.browser, arguments=[url],
+                                  timeout=timeout)
 
         elif method is RunMethod.shell:
             command = '''$ie = new-object -com "InternetExplorer.Application";$ie.navigate("{0}");$ie.visible = $true'''.format(url)
@@ -259,14 +259,14 @@ class OSWindows():
             self.run_shell_cmd(command=command)
 
         elif method is RunMethod.run:
-            self.vb.keyboard_combination(['win', 'r'])
+            self.vbox.keyboard_combination(['win', 'r'])
             time.sleep(5)
-            self.vb.keyboard_input('iexplore '+url+'\n')
+            self.vbox.keyboard_input('iexplore '+url+'\n')
 
         elif method is RunMethod.start:
-            self.vb.keyboard_combination(['win'])
+            self.vbox.keyboard_combination(['win'])
             time.sleep(5)
-            self.vb.keyboard_input('iexplore '+url+'\n')
+            self.vbox.keyboard_input('iexplore '+url+'\n')
 
 
     def kill_process(self, name='', pid=0):

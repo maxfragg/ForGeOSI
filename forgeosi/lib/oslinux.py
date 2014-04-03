@@ -26,23 +26,23 @@ class OSLinux():
         specifications, which Unity in Ubuntu 12.04 does not.
     """
 
-    def __init__(self, vb, term="/usr/bin/xterm", home="/home/default/",
+    def __init__(self, vbox, term="/usr/bin/xterm", home="/home/default/",
                  env=[], xdotool_extended=False):
         """Initializes the osLinux class
 
         Arguments:
-            vb - ForGeOSI.VBox instance
+            vbox - ForGeOSI.VBox instance
             term - path to the default terminal emulator to be used
             home - home of the default user, used for the guest session
             env - custom expansion of the environment variables for the User
             xdotool_extended - enables focusing windows using xdotool
         """
-        self.vb = vb
+        self.vbox = vbox
         self.term = term
         self.home = home
         self.shell = "/bin/bash"
-        self.env = ["DISPLAY=:0", "USER="+vb.username,
-                    "HOME=/home/"+vb.username] + env
+        self.env = ["DISPLAY=:0", "USER="+vbox.username,
+                    "HOME=/home/"+vbox.username] + env
         self.xdt = "/usr/bin/xdotool"
         self.xdte = xdotool_extended
 
@@ -62,12 +62,12 @@ class OSLinux():
             else:
                 cmd = command + "&\n"
 
-            self.vb.run_process(command=self.term, key_input=cmd,
-                                environment=self.env, native_input=True,
-                                wait=True)
+            self.vbox.run_process(command=self.term, key_input=cmd,
+                                  environment=self.env, native_input=True,
+                                  wait=True)
         else:
-            self.vb.run_process(command=self.shell, arguments=['-c', command],
-                                environment=self.env, wait=True)
+            self.vbox.run_process(command=self.shell, arguments=['-c', command],
+                                  environment=self.env, wait=True)
 
 
     def _build_xdotool_args(self, window_class, name, pid):
@@ -98,7 +98,7 @@ class OSLinux():
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
         """Sends keyboard input to a running gui process.
 
-        Arguments
+        Arguments:
             input - String of characters to be send to the process, magic for
                 sleeping during input, put a 'sleep_hack\n' in the string to
                 sleep at this position, for example to wait for sudo to ask for
@@ -124,16 +124,16 @@ class OSLinux():
                 time.sleep(10)
             else:
                 #reinsert '\n' since we lost that with the splitlines
-                self.vb.run_process(command=self.xdt,
-                                    arguments=args+[part+'\n'],
-                                    environment=self.env)
+                self.vbox.run_process(command=self.xdt,
+                                      arguments=args+[part+'\n'],
+                                      environment=self.env)
 
 
 
     def keyboard_specialkey(self, key, window_class='', name='', pid=0):
         """Sends a special key or key combination to a running gui process.
 
-        Arguments
+        Arguments:
             key - X name of the key to be send as a string, names like "alt",
                 "ctrl", combinations like "ctl+alt+backspace" also work
             window_class - X-property, usually matching the program name, which
@@ -147,8 +147,8 @@ class OSLinux():
         #key uses keynames in oposite to type
         args = self._build_xdotool_args(window_class, name, pid) + ["key"]
 
-        self.vb.run_process(command=self.xdt, arguments=args+[key],
-                            environment=self.env)
+        self.vbox.run_process(command=self.xdt, arguments=args+[key],
+                              environment=self.env)
 
 
     def copy_file(self, source, destination):
@@ -228,14 +228,14 @@ class OSLinux():
             raise TypeError("method needs to be of type RunMethod")
 
         if method is RunMethod.direct:
-            self.vb.run_process(command="/usr/bin/firefox",
-                                arguments=["-new-tab", url],
-                                environment=self.env, wait=False)
+            self.vbox.run_process(command="/usr/bin/firefox",
+                                  arguments=["-new-tab", url],
+                                  environment=self.env, wait=False)
         elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
         else:
-            self.vb.log.add_warning("RunMethod: " + method.name
-                                    + " is not implemented on Linux")
+            self.vbox.log.add_warning("RunMethod: " + method.name
+                                      + " is not implemented on Linux")
 
 
     def uninstall_program(self, program):
@@ -245,7 +245,7 @@ class OSLinux():
             program - name of the program to remove
         """
         cmd = "sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program,
-                self.vb.password)
+                self.vbox.password)
         self.run_shell_cmd(command=cmd)
 
 

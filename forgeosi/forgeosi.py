@@ -26,7 +26,7 @@ VirtualBox, specifically for the use in computer forensics, but it might be
 useful else where too.
 
 To work properly, it expects a prepared VirtualBox image to start with. To
-create a working image, a correct set osType is important, since all Vbox.os
+create a working image, a correct set os_type is important, since all Vbox.os
 functions rely on this to be OS specific. Next, the Guest Additions need to be
 installed in the VM and the keyboard layout needs to match the one, of the host
 PC, otherwise keyboard input might not match expectations.
@@ -68,8 +68,8 @@ class VboxInfo():
         return "\n".join([vm.name for vm in self.vb.machines])
 
 
-    def list_ostypes(self):
-        """Lists all osTypes, that the local VirtualBox accepts
+    def list_os_types(self):
+        """Lists all os_types, that the local VirtualBox accepts
         """
         return "\n".join([os_.id_p for os_ in self.vb.guest_os_types])
 
@@ -173,8 +173,7 @@ class Vbox():
 
     def __init__(self, basename="ubuntu-lts-base",
                  clonename="testvm", mode=VboxMode.clone,
-                 linked_name="Forensig20Linked",
-                 wait=True):
+                 linked_name="Forensig20Linked", wait=True):
         """Initialises a virtualbox instance
 
         The new instance of this class can either reuse an existing virtual
@@ -223,19 +222,23 @@ class Vbox():
             self.vm = self.vb.find_machine(basename)
             self.is_clone = False
 
-        self.osType = self.vm.os_type_id
+        self.os_type = self.vm.os_type_id
 
         self.session = self.vm.create_session()
-        self.guestsession = False
-        self.os = False
+        self.guestsession = None
+        self.os = None
         self.basename = basename
         self.running = False
         self.speedup = 100
         self.offset = 0
         self.medium = False
+        self.username = ""
+        self.password = ""
+        self.network = None
+
 
         self.log = logger.Logger()
-        self.log.add_vm(clonename, basename, self.osType)
+        self.log.add_vm(clonename, basename, self.os_type)
 
 
     @check_stopped
@@ -528,13 +531,13 @@ class Vbox():
         #use vm property to find systemtype
         #we create the self.os at this point, because it needs a running guest
         #session anyway, this prevents if form being used before this exists
-        if self.osType in ["Linux26", "Linux26_64", "Ubuntu", "Ubuntu_64"]:
+        if self.os_type in ["Linux26", "Linux26_64", "Ubuntu", "Ubuntu_64"]:
             if home:
                 self.os = oslinux.OSLinux(self, home=home)
             else:
                 self.os = oslinux.OSLinux(self)
-        elif self.osType in ["Windows7", "Windows7_64", "Windows8",
-                             "Windows8_64", "Windows81", "Windows81_64"]:
+        elif self.os_type in ["Windows7", "Windows7_64", "Windows8",
+                              "Windows8_64", "Windows81", "Windows81_64"]:
             if home:
                 self.os = oswindows.OSWindows(self, home=home)
             else:
@@ -582,10 +585,11 @@ class Vbox():
         """
 
         self.medium = self.vb.open_medium(path,
-            virtualbox.library.DeviceType.dvd,
-            virtualbox.library.AccessMode.read_only, False)
-        self.session.machine.mount_medium(ControllerType.IDE.name, 1, 0, 
-            self.medium, True)
+                                          virtualbox.library.DeviceType.dvd,
+                                          virtualbox.library.AccessMode.read_only,
+                                          False)
+        self.session.machine.mount_medium(ControllerType.IDE.name, 1, 0,
+                                          self.medium, True)
 
         self.log.add_cd(path, remove_image, time_offset=self.offset,
                         time_rate=self.speedup)
@@ -596,7 +600,7 @@ class Vbox():
         """Removes a cd from the emulated IDE CD-drive
         """
         self.session.machine.mount_medium(ControllerType.IDE.name, 1, 0,
-            virtualbox.library.IMedium(),True)
+                                          virtualbox.library.IMedium(), True)
         if self.medium:
             self.medium.close()
 
@@ -604,8 +608,8 @@ class Vbox():
     @check_running
     @check_guestsession
     def run_process(self, command, arguments=[], stdin='', key_input='',
-            environment=[], native_input=False, timeout=0, wait_time=10,
-            wait=True):
+                    environment=[], native_input=False, timeout=0, wait_time=10,
+                    wait=True):
         """Runs a process with arguments and stdin in the VM
 
         This method requires the VirtualBox Guest Additions to be installed.
@@ -644,11 +648,13 @@ class Vbox():
 
         else:
             flags = [virtualbox.library.ProcessCreateFlag.wait_for_process_start_only,
-                   virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes]
+                     virtualbox.library.ProcessCreateFlag.ignore_orphaned_processes]
 
             process = self.guestsession.process_create(command=command,
-                arguments=arguments, environment=environment, flags=flags,
-                timeout_ms = timeout)
+                                                       arguments=arguments,
+                                                       environment=environment,
+                                                       flags=flags,
+                                                       timeout_ms=timeout)
 
             if key_input:
                 time.sleep(wait_time)
@@ -666,8 +672,8 @@ class Vbox():
             stderr = ""
 
         self.log.add_process(process, command, arguments, stdin, key_input,
-            stdout, stderr, process.pid, time_offset=self.offset,
-            time_rate=self.speedup)
+                             stdout, stderr, process.pid,
+                             time_offset=self.offset, time_rate=self.speedup)
 
         return process.pid, stdout, stderr
 
@@ -844,7 +850,7 @@ class Vbox():
         buttonstate = lmb + (2 * rmb) + (4 * mmb)
 
         self.session.console.mouse.put_mouse_event_absolute(x, y, 0, 0,
-            buttonstate)
+                                                            buttonstate)
         if release:
             self.session.console.mouse.put_mouse_event_absolute(x, y, 0, 0, 0)
 
@@ -874,7 +880,7 @@ class Vbox():
         #allow VMs to see each other
         self.network.promisc_mode_policy = virtualbox.library.NetworkAdapterPromiscModePolicy.allow_network
         self.network.enabled = True
-        # to ensure the vm notices the network changes, we remove the cable for 
+        # to ensure the vm notices the network changes, we remove the cable for
         # 5 seconds
         self.network.cable_connected = False
         time.sleep(5)
@@ -897,7 +903,8 @@ class Vbox():
         """
 
         return self.session.machine.get_guest_property_value("/VirtualBox/GuestInfo/Net/"
-            +str(adapter)+"/V4/IP")
+                                                             + str(adapter)
+                                                             + "/V4/IP")
 
 
     @lock_if_not_running
@@ -906,7 +913,7 @@ class Vbox():
         """
 
         self.session.machine.set_cpu_property(
-            virtualbox.library.CPUPropertyType.synthetic,True)
+            virtualbox.library.CPUPropertyType.synthetic, True)
 
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):

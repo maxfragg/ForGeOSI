@@ -6,12 +6,14 @@
 #
 
 from enum import Enum
+
 __all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType", "StopMode"]
 
 __doc__ = """\
 Collection of enums used for parameters, meant for type safety in parameters,
 to detect invalid parameters.
 """
+
 
 class VboxMode(Enum):
     """Basic operation mode off the VBox class
@@ -38,6 +40,7 @@ class SessionType(Enum):
     sdl = 3
     emergencystop = 4
 
+
 class RunMethod(Enum):
     """Decides, how a program should be started
 
@@ -52,6 +55,7 @@ class RunMethod(Enum):
     start = 3
     run = 4
 
+
 class ControllerType(Enum):
     """Mass storage controller types
 
@@ -61,6 +65,7 @@ class ControllerType(Enum):
     """
     SATA = 1
     IDE = 2
+
 
 class StopMode(Enum):
     """Modes of stopping the virtual machine
