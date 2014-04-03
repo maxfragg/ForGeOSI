@@ -16,9 +16,10 @@ import os
 from lxml import etree
 
 
-_ignore = ['time', 'up_time', 'time_rate', 'real_time', 'process', 'pid']
+IGNORE = ['time', 'up_time', 'time_rate', 'real_time', 'process', 'pid']
 """Ignore time output to enable easier comparison of multiple runs
 """
+
 
 def toXML(classElement, **kwargs):
     """creates a xml representation of a given object
@@ -46,7 +47,7 @@ class LogCopiedFile():
     """Stores data of a single file, copied to the VM
     """
     def __init__(self, source, destination, time_offset=0, time_rate=100,
-            up_time=0):
+                 up_time=0):
         self.source = source
         self.destination = destination
         self.tmp = self.copy_to_temp()
@@ -68,33 +69,31 @@ class LogCopiedFile():
         return tmp
 
     def calc_md5sum(self):
-        md5 = hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
-        return md5
+        return hashlib.md5(open(self.tmp, 'rb').read()).hexdigest()
 
     def calc_sha256sum(self):
-        sha256 = hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
-        return sha256
+        return hashlib.sha256(open(self.tmp, 'rb').read()).hexdigest()
+
 
     def get_entry(self):
-        return {'source': self.source,
-            'destination': self.destination, 'tmp': self.tmp,
-            'md5sum': self.md5Sum, 'sha256sum': self.sha256sum,
-            'filesize': self.filesize, 'real_time': self.real_time,
-            'time': self.time, 'time_rate': self.time_rate,
-            'up_time': self.up_time}
+        return {'source': self.source, 'destination': self.destination,
+                'tmp': self.tmp, 'md5sum': self.md5Sum,
+                'sha256sum': self.sha256sum, 'filesize': self.filesize,
+                'real_time': self.real_time, 'time': self.time,
+                'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return self.tmp
 
     def to_xml(self):
-        return toXML(self, nodeName="copiedFile", ignore=_ignore)
+        return toXML(self, nodeName="copiedFile", ignore=IGNORE)
 
 
 class LogCdMount():
     """Stores data about a cd mounted to the VM
     """
     def __init__(self, path, delete=False, time_offset=0, time_rate=0,
-            up_time=0):
+                 up_time=0):
         self.path = path
         self.delete = delete
         self.real_time = time.time()
@@ -104,8 +103,8 @@ class LogCdMount():
 
     def get_entry(self):
         return {'path': self.path, 'real_time': self.real_time,
-            'time': self.time, 'time_rate': self.time_rate,
-            'up_time': self.up_time}
+                'time': self.time, 'time_rate': self.time_rate,
+                'up_time': self.up_time}
 
     def cleanup(self):
         if self.delete:
@@ -114,7 +113,7 @@ class LogCdMount():
             return False
 
     def to_xml(self):
-        return toXML(self, nodeName="cd", ignore=_ignore)
+        return toXML(self, nodeName="cd", ignore=IGNORE)
 
 
 class LogEncodedCommand():
@@ -139,7 +138,8 @@ class LogProcess():
     """Stores data of a single process, running in the VM
     """
     def __init__(self, process, path, arguments, stdin='', key_input='',
-            stdout='', stderr='', pid=0, time_offset=0, time_rate=0, up_time=0):
+                 stdout='', stderr='', pid=0, time_offset=0, time_rate=0,
+                 up_time=0):
         self.process = process
         self.path = path
         self.arguments = arguments
@@ -155,17 +155,18 @@ class LogProcess():
 
     def get_entry(self):
         return {'process': self.process, 'path': self.path,
-            'arguments': self.arguments, 'stdin': self.stdin,
-            'key_input': self.key_input, 'stdout': self.stdout,
-            'stderr': self.stderr, 'pid': self.pid, 'real_time': self.real_time,
-            'time': self.time, 'time_rate': self.time_rate,
-            'up_time': self.up_time}
+                'arguments': self.arguments, 'stdin': self.stdin,
+                'key_input': self.key_input, 'stdout': self.stdout,
+                'stderr': self.stderr, 'pid': self.pid,
+                'real_time': self.real_time, 'time': self.time,
+                'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="process", ignore=_ignore)
+        return toXML(self, nodeName="process", ignore=IGNORE)
+
 
 class LogRawKeyboard():
     """Stores raw keyboard input
@@ -179,19 +180,21 @@ class LogRawKeyboard():
 
     def get_entry(self):
         return {'keyboard input': self.key_input, 'real_time': self.real_time,
-            'time': self.time, 'time_rate': self.time_rate, 'up_time': self.up_time}
+                'time': self.time, 'time_rate': self.time_rate,
+                'up_time': self.up_time}
 
     def cleanup(self):
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="keyboard_input", ignore=_ignore)
+        return toXML(self, nodeName="keyboard_input", ignore=IGNORE)
 
 
 class LogMouse():
     """Stores raw mouse input
     """
-    def __init__(self, x, y, lmb, mmb, rmb, time_offset=0, time_rate=0, up_time=0):
+    def __init__(self, x, y, lmb, mmb, rmb, time_offset=0, time_rate=0,
+                 up_time=0):
         self.x = x
         self.y = y
         self.lmb = lmb
@@ -204,15 +207,15 @@ class LogMouse():
 
     def get_entry(self):
         return {'x': self.x, 'y': self.y, 'left mouse button': self.lmb,
-        'middle mouse button': self.mmb, 'right mouse button': self.rmb,
-        'real_time': self.real_time, 'time': self.time, 'time_rate': self.time_rate,
-        'up_time': self.up_time}
+                'middle mouse button': self.mmb, 'right mouse button': self.rmb,
+                'real_time': self.real_time, 'time': self.time,
+                'time_rate': self.time_rate, 'up_time': self.up_time}
 
     def cleanup(self):
         return False
 
     def to_xml(self):
-        return toXML(self, nodeName="mouse_input", ignore=_ignore)
+        return toXML(self, nodeName="mouse_input", ignore=IGNORE)
 
 
 class LogVM():
@@ -224,7 +227,7 @@ class LogVM():
 
     def get_entry(self):
         return {'vmname': self.vmname, 'basename': self.basename,
-            'osType': self.osType}
+                'osType': self.osType}
 
     def cleanup(self):
         return False
@@ -274,7 +277,7 @@ class Logger():
     """A simple logger for ForGeOSI
 
     This logger creates a protocol of actions performed with pyvbox, that
-    altered the virtual machine image. XML-export is available with 
+    altered the virtual machine image. XML-export is available with
     get_xml_log, get_structured_xml_log and write_xml_log.
     """
 
@@ -282,27 +285,43 @@ class Logger():
         self.log = []
 
     def add_vm(self, *args, **kwargs):
+        """Add vm entry to log, required
+        """
         self.log.append(LogVM(*args, **kwargs))
 
     def add_process(self, *args, **kwargs):
+        """add process entry to log
+        """
         self.log.append(LogProcess(*args, **kwargs))
 
     def add_file(self, *args, **kwargs):
+        """add file entry to log
+        """
         self.log.append(LogCopiedFile(*args, **kwargs))
 
     def add_cd(self, *args, **kwargs):
+        """add cd entry to log
+        """
         self.log.append(LogCdMount(*args, **kwargs))
 
     def add_keyboard(self, *args, **kwargs):
+        """add keyboard input entry to log
+        """
         self.log.append(LogRawKeyboard(*args, **kwargs))
 
     def add_mouse(self, *args, **kwargs):
+        """add mouse input entry to log
+        """
         self.log.append(LogMouse(*args, **kwargs))
 
     def add_encodedCommand(self, *args, **kwargs):
+        """add readable version of encoded commands entry to log
+        """
         self.log.append(LogEncodedCommand(*args, **kwargs))
 
     def add_warning(self, *args, **kwargs):
+        """adds warning entry to the log
+        """
         self.log.append(LogWarning(*args, **kwargs))
 
     def get_pid(self, path=''):
@@ -331,6 +350,9 @@ class Logger():
 
     def get_xml_log_by_type(self, logtype):
         """Fast way to check for entry of one type
+
+        Arguments:
+            logtype - type of log entry
         """
 
         partial_log = []
@@ -342,6 +364,9 @@ class Logger():
 
     def get_log_object_by_type(self, logtype):
         """Gets all log objects of one type
+
+        Arguments:
+            logtype - type of log entry
         """
         ret = []
         for l in self.log:
@@ -353,7 +378,7 @@ class Logger():
     def get_xml_log(self):
         """Returns XML representation of the log
 
-        in the original order of actions 
+        in the original order of actions
         """
         ret = "<log>\n"
         for l in self.log:
@@ -381,16 +406,16 @@ class Logger():
         root = self.get_xml_log_by_type(LogVM)[0]
 
         elements = {'processes': LogProcess, 'cdmounts': LogCdMount,
-            'copiedfile': LogCopiedFile, 'encodedcommands': LogEncodedCommand,
-            'mice': LogMouse, 'keyboards': LogRawKeyboard,
-            'warnings': LogWarning}
+                    'copiedfile': LogCopiedFile,
+                    'encodedcommands': LogEncodedCommand, 'mice': LogMouse,
+                    'keyboards': LogRawKeyboard, 'warnings': LogWarning}
 
         for log_type in elements:
             node = etree.Element(log_type)
             empty = True
             for subnode in self.get_xml_log_by_type(elements[log_type]):
                 if subnode is not None:
-                    empty = False    
+                    empty = False
                 node.append(subnode)
             if not empty:
                 root.append(node)

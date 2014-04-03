@@ -45,7 +45,7 @@ Dependencies:
     lxml
 """
 
-usertoken = ""
+USERTOKEN = ""
 """this token is added to user-strings to separate users from each other, use
 empty string for no separation
 """
@@ -71,7 +71,7 @@ class VboxInfo():
     def list_ostypes(self):
         """Lists all osTypes, that the local VirtualBox accepts
         """
-        return "\n".join([os.id_p for os in self.vb.guest_os_types])
+        return "\n".join([os_.id_p for os_ in self.vb.guest_os_types])
 
 
 class VboxConfig():
@@ -90,7 +90,7 @@ class VboxConfig():
         This is needed to enable networking between different VM instances
         """
 
-        network_name = network_name + usertoken
+        network_name = network_name + USERTOKEN
 
         try:
             self.net = self.vb.find_nat_network_by_name(network_name)
@@ -107,6 +107,8 @@ class VboxConfig():
 
 
     def get_network_name(self):
+        """returns the networkname, that has been created for this instance
+        """
         return self.network_name
 
 
@@ -170,9 +172,9 @@ class Vbox():
     """
 
     def __init__(self, basename="ubuntu-lts-base",
-            clonename="testvm", mode=VboxMode.clone,
-            linked_name="Forensig20Linked",
-            wait=True):
+                 clonename="testvm", mode=VboxMode.clone,
+                 linked_name="Forensig20Linked",
+                 wait=True):
         """Initialises a virtualbox instance
 
         The new instance of this class can either reuse an existing virtual
@@ -197,14 +199,14 @@ class Vbox():
             _orig_session = _orig.create_session()
 
             self.vm = self.vb.create_machine("", clonename, [],
-                _orig.os_type_id, "")
+                                             _orig.os_type_id, "")
 
             try:
                 _snap = _orig.find_snapshot(linked_name)
             except:
 
                 self.progress = _orig_session.console.take_snapshot(linked_name,
-                    "")
+                                                                    "")
                 self.progress.wait_for_completion()
                 _snap = _orig.find_snapshot(linked_name)
 
@@ -253,7 +255,7 @@ class Vbox():
         self.unlock()
 
         self.progress = self.vm.launch_vm_process(self.session,
-            session_type.name, '')
+                                                  session_type.name, '')
 
         self.running = True
 
@@ -325,7 +327,7 @@ class Vbox():
         """
         try:
             self.vm.lock_machine(self.session,
-                virtualbox.library.LockType.shared)
+                                 virtualbox.library.LockType.shared)
         except:
             pass
 
@@ -342,8 +344,8 @@ class Vbox():
 
 
     @check_stopped
-    def export(self, path="/tmp/disk.vdi",
-        controller=ControllerType.SATA, port=0, disk=0, raw=False, wait=True):
+    def export(self, path="/tmp/disk.vdi", controller=ControllerType.SATA,
+               port=0, disk=0, raw=False, wait=True):
         """Export a VirtualBox hard disk image
 
         By default, it will export the first disk on the sata controller, which
@@ -372,7 +374,7 @@ class Vbox():
             # variant = virtualbox.library.MediumVariant.vmdk_raw_disk
 
             subprocess.check_output(['vboxmanage', 'clonehd', '--format',
-                'RAW',cur_hdd.location,path])
+                                     'RAW', cur_hdd.location, path])
 
         else:
             clone_hdd = self.vb.create_hard_disk("", path)
@@ -496,7 +498,7 @@ class Vbox():
 
     @check_running
     def create_guest_session(self, username="default", password="12345",
-            wait=True):
+                             home="", wait=True):
         """creates a guest session for issuing commands to the guest system
 
         While the VirtualBox API would support up to 256 simultaneous guest
@@ -527,15 +529,21 @@ class Vbox():
         #we create the self.os at this point, because it needs a running guest
         #session anyway, this prevents if form being used before this exists
         if self.osType in ["Linux26", "Linux26_64", "Ubuntu", "Ubuntu_64"]:
-            self.os = oslinux.osLinux(self)
+            if home:
+                self.os = oslinux.OSLinux(self, home=home)
+            else:
+                self.os = oslinux.OSLinux(self)
         elif self.osType in ["Windows7", "Windows7_64", "Windows8",
-                "Windows8_64", "Windows81", "Windows81_64"]:
-            self.os = oswindows.osWindows(self)
+                             "Windows8_64", "Windows81", "Windows81_64"]:
+            if home:
+                self.os = oswindows.OSWindows(self, home=home)
+            else:
+                self.os = oswindows.OSWindows(self)
 
 
     @check_running
     def mount_folder_as_cd(self, folder_path, iso_path="/tmp/cd.iso",
-            cdlabel="MyCD"):
+                           cdlabel="MyCD"):
         """Creates a iso-image based on directory and mounts it to the VM
 
         If the operating system inside the vm does no automounting, further
@@ -557,7 +565,7 @@ class Vbox():
             return
 
         args = ["-J", "-l", "-R", "-V", cdlabel, "-iso-level", "4", "-o",
-            iso_path, folder_path]
+                iso_path, folder_path]
 
         subprocess.check_output(["mkisofs"]+args)
 
@@ -580,7 +588,7 @@ class Vbox():
             self.medium, True)
 
         self.log.add_cd(path, remove_image, time_offset=self.offset,
-            time_rate=self.speedup)
+                        time_rate=self.speedup)
 
 
     @check_running
@@ -631,8 +639,8 @@ class Vbox():
 
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command,
-            arguments=arguments, stdin=stdin, environment=environment,
-            timeout_ms=timeout)
+                arguments=arguments, stdin=stdin, environment=environment,
+                timeout_ms=timeout)
 
         else:
             flags = [virtualbox.library.ProcessCreateFlag.wait_for_process_start_only,
@@ -652,7 +660,7 @@ class Vbox():
 
             if wait:
                 process.wait_for(int(virtualbox.library.ProcessWaitForFlag.terminate),
-                    10000)
+                                 10000)
 
             stdout = ""
             stderr = ""
@@ -712,7 +720,7 @@ class Vbox():
         progress = self.guestsession.copy_to(source, dest, [])
 
         self.log.add_file(source=source, destination=dest,
-            time_offset=self.offset, time_rate=self.speedup)
+                          time_offset=self.offset, time_rate=self.speedup)
 
         if wait:
             progress.wait_for_completion()
@@ -755,7 +763,7 @@ class Vbox():
         self.session.console.keyboard.put_keys(key_input)
 
         self.log.add_keyboard(key_input, time_offset=self.offset,
-            time_rate=self.speedup)
+                              time_rate=self.speedup)
 
 
     @check_running
@@ -775,21 +783,23 @@ class Vbox():
             make_code - send the keypress
             break_code - send the keyrelease
         """
-        make_codes={'win': [0xE0, 0x5B], 'esc': [0x01], 'bksp': [0x0E],
-            'ctrl': [0x1D], 'alt': [0x38], 'del': [0xE0, 0x53], 'tab': [0x0F],
-            'enter': [0x1C], 'up': [0xE0, 0x48], 'left':[0xE0, 0x4B],
-            'right': [0xE0 ,0x4D], 'down': [0xE0, 0x50],
-            'f1': [0x3B], 'f2': [0x3C], 'f3': [0x3D], 'f4': [0x3E], 'f5': [0x3F],
-            'f6': [0x40], 'f7': [0x41], 'f8': [0x42], 'f9': [0x43],
-            'f10': [0x44], 'f11': [0x57], 'f12': [0x58]}
+        make_codes = {'win': [0xE0, 0x5B], 'esc': [0x01], 'bksp': [0x0E],
+                      'ctrl': [0x1D], 'alt': [0x38], 'del': [0xE0, 0x53],
+                      'tab': [0x0F], 'enter': [0x1C], 'up': [0xE0, 0x48],
+                      'left': [0xE0, 0x4B], 'right': [0xE0, 0x4D],
+                      'down': [0xE0, 0x50], 'f1': [0x3B], 'f2': [0x3C],
+                      'f3': [0x3D], 'f4': [0x3E], 'f5': [0x3F], 'f6': [0x40],
+                      'f7': [0x41], 'f8': [0x42], 'f9': [0x43], 'f10': [0x44],
+                      'f11': [0x57], 'f12': [0x58]}
 
-        break_codes={'win': [0xE0, 0xDB], 'esc': [0x81], 'bksp': [0x8E],
-            'ctrl': [0x9D], 'alt': [0xB8],'del': [ 0xE0, 0xD3], 'tab': [0x8F],
-            'enter': [0x9C], 'up': [0xE0, 0xC8], 'left':[0xE0, 0xCB],
-            'right': [0xE0 ,0xCD], 'down': [0xE0, 0xD0],
-            'f1': [0xBB], 'f2': [0xBC], 'f3': [0xBD], 'f4': [0xBE], 'f5': [0xBF],
-            'f6': [0xC0], 'f7': [0xC1], 'f8': [0xC2], 'f9': [0xC3],
-            'f10': [0xC4], 'f11': [0xD7], 'f12': [0xD8]}
+        break_codes = {'win': [0xE0, 0xDB], 'esc': [0x81], 'bksp': [0x8E],
+                       'ctrl': [0x9D], 'alt': [0xB8], 'del': [0xE0, 0xD3],
+                       'tab': [0x8F], 'enter': [0x9C], 'up': [0xE0, 0xC8],
+                       'left': [0xE0, 0xCB], 'right': [0xE0, 0xCD],
+                       'down': [0xE0, 0xD0], 'f1': [0xBB], 'f2': [0xBC],
+                       'f3': [0xBD], 'f4': [0xBE], 'f5': [0xBF], 'f6': [0xC0],
+                       'f7': [0xC1], 'f8': [0xC2], 'f9': [0xC3], 'f10': [0xC4],
+                       'f11': [0xD7], 'f12': [0xD8]}
 
         if make_code:
             for s in keys:
@@ -800,7 +810,8 @@ class Vbox():
                     self.session.console.keyboard.put_scancodes(
                         [int(x) for x in make_codes[s]])
                     self.log.add_keyboard("makecode: "+str(s),
-                        time_offset=self.offset, time_rate=self.speedup)
+                                          time_offset=self.offset,
+                                          time_rate=self.speedup)
                 else:
                     # if its not in the list, assume it is a normal char/num
                     self.keyboard_input(s)
@@ -811,7 +822,8 @@ class Vbox():
                     self.session.console.keyboard.put_scancodes(
                         [int(x) for x in break_codes[s]])
                     self.log.add_keyboard("breakcode: "+str(s),
-                        time_offset=self.offset, time_rate=self.speedup)
+                                          time_offset=self.offset,
+                                          time_rate=self.speedup)
 
 
     @check_running
@@ -854,7 +866,7 @@ class Vbox():
             adapter - internal number of the network adapter, range 0-7
         """
 
-        network_name = network_name + usertoken
+        network_name = network_name + USERTOKEN
 
         self.network = self.session.machine.get_network_adapter(adapter)
         self.network.nat_network = network_name
@@ -888,6 +900,14 @@ class Vbox():
             +str(adapter)+"/V4/IP")
 
 
+    @lock_if_not_running
+    def set_synthetic_cpu(self):
+        """Sets the cpu property to make the vm more portable
+        """
+
+        self.session.machine.set_cpu_property(
+            virtualbox.library.CPUPropertyType.synthetic,True)
+
     @check_stopped
     def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
         """clean all data except, what might have been exported
@@ -914,7 +934,7 @@ class Vbox():
 
             for disk in self.vb.hard_disks:
                 if self.vm.id_p in disk.machine_ids:
-                    hdd.append(disk)
+                    hdds.append(disk)
 
             self.vm.remove()
 
@@ -922,4 +942,4 @@ class Vbox():
             # as well
             for disk in hdds:
                 if not disk.machine_ids:
-                    hdd.delete_storage()
+                    disk.delete_storage()

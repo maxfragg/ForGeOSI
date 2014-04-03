@@ -10,10 +10,14 @@
 
 import base64
 import time
-from param import *  # local import
+from param import RunMethod  # local import
+
+__doc__ = """\
+Windows specifc code, see class documentation for details
+"""
 
 
-class osWindows():
+class OSWindows():
     """Windows specific operations
 
     Classes starting with OS should all implement the same interface, that
@@ -31,11 +35,20 @@ class osWindows():
     def __init__(self, vb,
             term="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
             home="C:\\Users\\default.windows-8-base\\"):
+        """Initializes the osWindows class
+
+        Arguments:
+            vb - ForGeOSI.VBox instance
+            term - path to the default terminal to be used, should be a
+                powershell.exe
+            home - home of the default user, used for the guest session
+        """
+
         self.vb = vb
         self.term = term
         self.home = home
         self.cmd = "C:\\Windows\\System32\\cmd.exe"
-        self.ie = "C:\\Program Files (x86)\\Internet Explorer\iexplore.exe"
+        self.ie = "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe"
 
 
     def _base64_encode_command(self, command):
@@ -52,6 +65,7 @@ class osWindows():
         command = base64.b64encode(command)
         return command
 
+
     def _base64_decode_command(self, command):
         """debugging purpose only, decodes base64 encoded commands
         """
@@ -65,12 +79,14 @@ class osWindows():
             i = i + 1
         return blank_command
 
+
     def _check_path(self, path):
         """check if path parameters contain a '-'
         """
         if '-' in path:
-            vb.log.add_warning('The path "'+path+
+            self.vb.log.add_warning('The path "'+path+
                 '" contains a "-", this is know to cause problems')
+
 
     def run_shell_cmd(self, command, cmd=False, stop_ps=False):
         """runs a command inside the default shell of the user or in the legacy
@@ -83,15 +99,16 @@ class osWindows():
         """
         if cmd:
             return self.vb.run_process(command=self.cmd,
-                arguments=["/C"]+command)
+                                       arguments=["/C"]+command)
         else:
             if stop_ps:
                 command += "; stop-process powershell"
             self.vb.log.add_encodedCommand(command)
             command = self._base64_encode_command(command)
             return self.vb.run_process(command=self.term,
-                arguments=["-OutputFormat", "Text", "-inputformat", "none",
-                    "-EncodedCommand", command])
+                                       arguments=["-OutputFormat", "Text",
+                                                  "-inputformat", "none",
+                                                  "-EncodedCommand", command])
 
 
     def keyboard_input(self, key_input, window_class='', name='', pid=0):
@@ -140,7 +157,7 @@ class osWindows():
             self.run_shell_cmd(command=["copy", source, destination], cmd=True)
         else:
             self.run_shell_cmd(command="copy "+source+" "+destination,
-                cmd=False)
+                               cmd=False)
 
 
     def move_file(self, source, destination, cmd=True):
@@ -158,7 +175,7 @@ class osWindows():
             self.run_shell_cmd(command=["move", source, destination], cmd=True)
         else:
             self.run_shell_cmd(command="move "+source+" "+destination,
-                cmd=False)
+                               cmd=False)
 
 
     def make_dir(self, path="C:\\test", cmd=True):
@@ -176,7 +193,8 @@ class osWindows():
         else:
             self.run_shell_cmd(command="mkdir "+path, cmd=False)
 
-    def create_user(self ,username, password):
+
+    def create_user(self, username, password):
         """Creates a new user in the guest with default privileges. The
         guestsession needs to belong to a administrator user
 
@@ -211,10 +229,8 @@ class osWindows():
         self.run_shell_cmd(command=command)
 
 
-
-
     def open_browser(self, url="www.google.com", method=RunMethod.direct,
-            timeout=20000):
+                     timeout=20000):
         """Opens a Internet Explorer with the given url
 
         Arguments:
@@ -299,4 +315,4 @@ class osWindows():
         """
 
         self.uninstall_program("Oracle VM VirtualBox Guest Additions "
-            +str(version))
+                               + str(version))

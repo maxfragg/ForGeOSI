@@ -8,8 +8,12 @@
 from param import RunMethod  # local import
 import time
 
+__doc__ = """\
+Linux specifc code, see class documentation for details
+"""
 
-class osLinux():
+
+class OSLinux():
     """Linux specific operations
 
     Classes starting with os should all implement the same interface, that
@@ -23,18 +27,27 @@ class osLinux():
     """
 
     def __init__(self, vb, term="/usr/bin/xterm", home="/home/default/",
-            env=[], xdotool_extended=False):
+                 env=[], xdotool_extended=False):
+        """Initializes the osLinux class
+
+        Arguments:
+            vb - ForGeOSI.VBox instance
+            term - path to the default terminal emulator to be used
+            home - home of the default user, used for the guest session
+            env - custom expansion of the environment variables for the User
+            xdotool_extended - enables focusing windows using xdotool
+        """
         self.vb = vb
         self.term = term
         self.home = home
         self.shell = "/bin/bash"
         self.env = ["DISPLAY=:0", "USER="+vb.username,
-            "HOME=/home/"+vb.username] + env
+                    "HOME=/home/"+vb.username] + env
         self.xdt = "/usr/bin/xdotool"
         self.xdte = xdotool_extended
 
 
-    def run_shell_cmd(self, command, gui=False ,close_shell=False):
+    def run_shell_cmd(self, command, gui=False, close_shell=False):
         """runs a command inside the default shell of the user
 
         Arguments:
@@ -50,10 +63,11 @@ class osLinux():
                 cmd = command + "&\n"
 
             self.vb.run_process(command=self.term, key_input=cmd,
-                environment=self.env, native_input=True, wait=True)
+                                environment=self.env, native_input=True,
+                                wait=True)
         else:
-            self.vb.run_process(command=self.shell, arguments=['-c',command],
-                environment=self.env, wait=True)
+            self.vb.run_process(command=self.shell, arguments=['-c', command],
+                                environment=self.env, wait=True)
 
 
     def _build_xdotool_args(self, window_class, name, pid):
@@ -99,7 +113,8 @@ class osLinux():
 
         #type will simulate typing and interpret space '\n'
         args = self._build_xdotool_args(window_class, name, pid) + ["type",
-            "--delay","30"]
+                                                                    "--delay",
+                                                                    "30"]
 
         #send input line by line, to prevent to long argument
         key_input_split = str.splitlines(str(key_input))
@@ -109,8 +124,9 @@ class osLinux():
                 time.sleep(10)
             else:
                 #reinsert '\n' since we lost that with the splitlines
-                self.vb.run_process(command=self.xdt,arguments=args+[part+'\n'],
-                    environment=self.env)
+                self.vb.run_process(command=self.xdt,
+                                    arguments=args+[part+'\n'],
+                                    environment=self.env)
 
 
 
@@ -131,8 +147,8 @@ class osLinux():
         #key uses keynames in oposite to type
         args = self._build_xdotool_args(window_class, name, pid) + ["key"]
 
-        self.vb.run_process(command=self.xdt,arguments=args+[key],
-                environment=self.env)
+        self.vb.run_process(command=self.xdt, arguments=args+[key],
+                            environment=self.env)
 
 
     def copy_file(self, source, destination):
@@ -171,9 +187,9 @@ class osLinux():
             password - password of the new user
             sudopassword - password of the existing sudo user
         """
-        self.run_shell_cmd("sudo useradd "+username
-            + "\n" + rootpassword + "\nsudo passwd " + username
-            + "\nsleep_hack\n" + sudopassword+"\nsleep_hack\n"+password+"\n")
+        self.run_shell_cmd("sudo useradd "+username + "\nsleep_hack\n"
+                           + sudopassword + "\nsudo passwd " + username
+                           + "\nsleep_hack\n" + password + "\n")
 
 
     def download_file(self, url, destination="/home/default/test/image.jpg"):
@@ -198,7 +214,7 @@ class osLinux():
             port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-            + str(port)+"&")
+                           + str(port)+"&")
 
 
     def open_browser(self, url="www.google.com", method=RunMethod.direct):
@@ -213,12 +229,13 @@ class osLinux():
 
         if method is RunMethod.direct:
             self.vb.run_process(command="/usr/bin/firefox",
-                arguments=["-new-tab",url], environment=self.env, wait=False)
+                                arguments=["-new-tab", url],
+                                environment=self.env, wait=False)
         elif method is RunMethod.shell:
             self.run_shell_cmd(command="/usr/bin/firefox -new-tab "+url)
         else:
             self.vb.log.add_warning("RunMethod: " + method.name
-                + " is not implemented on Linux")
+                                    + " is not implemented on Linux")
 
 
     def uninstall_program(self, program):
@@ -227,15 +244,15 @@ class osLinux():
         Arguments:
             program - name of the program to remove
         """
-        cmd="sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program,
-            self.vb.password)
+        cmd = "sudo apt-get remove {0}\nsleep_hack\n{1}\n".format(program,
+                self.vb.password)
         self.run_shell_cmd(command=cmd)
 
 
-    def uninstall_guest_additions():
+    def uninstall_guest_additions(self):
         """remove the guest additions
 
-        Warning: This can not be undone, since remote running of software is 
+        Warning: This can not be undone, since remote running of software is
         very limited without guest additions!
         """
 
