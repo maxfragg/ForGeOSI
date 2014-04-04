@@ -35,7 +35,7 @@ def run(vm, output, verbose, run):
     vbox.os.download_file(url=
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
     time.sleep(30)
-    vbox.stop()
+    vbox.stop(stop_mode=forgeosi.StopMode.poweroff)
     if verbose:
         print "machine stopped"
     vbox.log.write_xml_log(output+"/log.xml")

@@ -134,8 +134,9 @@ The basic architecture:
 
 Feel free to extend, i will accept pull requests on a resonable base.
 
-##Testing There are testcases to be found __test/__, but they are not portable
-and will need fixing to run on other systems. The tests further require
+##Testing
+There are testcases to be found __test/__, but they are not portable
+and will need fixing to run on other systems. The tests further depend of following tools:
 * bash
 * Python 3
 * The Sleuth Kit ver 4.1 or highter, including fiwalk
