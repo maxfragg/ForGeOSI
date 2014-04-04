@@ -14,6 +14,7 @@ import forgeosi
 rhino1 = "http://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg"
 rhino2 = "https://upload.wikimedia.org/wikipedia/commons/b/b9/D%C3%BCrer_-_Rhinoceros.jpg"
 vm2 = "windows-7-base"
+vm1 = "ubuntu-lts-base"
 
 def run(vm, output, verbose, run):
     """testcase 3
@@ -23,15 +24,15 @@ def run(vm, output, verbose, run):
     """
     vboxcfg = forgeosi.VboxConfig()
     vboxcfg.get_nat_network(run)
-    vbox_c1 = forgeosi.Vbox(basename=vm, clonename="testrun"+run+"client1")
-    vbox_c2 = forgeosi.Vbox(basename=vm, clonename="testrun"+run+"client2")
+    vbox_c1 = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"client1")
+    vbox_c2 = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"client2")
     vbox_c3 = forgeosi.Vbox(basename=vm2, clonename="testrun"+run+"client3")
-    vbox_s = forgeosi.Vbox(basename=vm, clonename="testrun"+run+"server")
+    vbox_s = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"server")
     p_c1 = vbox_c1.start(wait=False)
     p_c2 = vbox_c2.start(wait=False)
     p_c3 = vbox_c3.start(wait=False)
     p_s = vbox_s.start(wait=False)
-    
+
     p_c1.wait_for_completion()
     p_c2.wait_for_completion()
     p_c3.wait_for_completion()
@@ -74,7 +75,6 @@ def run(vm, output, verbose, run):
                             method=forgeosi.RunMethod.run)
 
     time.sleep(30)
-
     vbox_c1.os.make_dir("~/rhinopix")
     time.sleep(10)
     vbox_c1.os.download_file(ip_server+":8080/rhino1.jpg",

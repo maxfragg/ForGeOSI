@@ -6,7 +6,7 @@ __ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), desig
 The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
 
 ##Requirements
-As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theorie should support Python 3 as well, vboxapi has some hickups, so it is not advised.
+As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theory should support Python 3 as well, vboxapi has some hickups, so it is not advised.
 Further more, the following Python packets are required:
 * pyvbox
 * decorator
@@ -133,6 +133,13 @@ The basic architecture:
   Types for typesave parameters
 
 Feel free to extend, i will accept pull requests on a resonable base.
+
+##Testing There are testcases to be found __test/__, but they are not portable
+and will need fixing to run on other systems. The tests further require
+* bash
+* Python 3
+* The Sleuth Kit ver 4.1 or highter, including fiwalk
+* idifference
 
 ###Issues
 Please report issues on [github](https://github.com/maxfragg/ForgeOSI/issues)

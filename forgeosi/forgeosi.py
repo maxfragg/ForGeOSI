@@ -225,8 +225,8 @@ class Vbox():
         self.os_type = self.vm.os_type_id
 
         self.session = self.vm.create_session()
-        self.guestsession = None
-        self.os = None
+        self.guestsession = None  # will be created by create_guest_session()
+        self.os = None  # will be created by create_guest_session()
         self.basename = basename
         self.running = False
         self.speedup = 100
@@ -234,8 +234,7 @@ class Vbox():
         self.medium = False
         self.username = ""
         self.password = ""
-        self.network = None
-
+        self.network = None  # Network will be stored here if needed
 
         self.log = logger.Logger()
         self.log.add_vm(clonename, basename, self.os_type)
@@ -271,7 +270,7 @@ class Vbox():
 
 
     @check_running
-    def stop(self, stop_mode=StopMode.shutdown, wait=True):
+    def stop(self, stop_mode=StopMode.shutdown, confirm=True, wait=True):
         """Stop a running machine
         Arguments:
             stop_mode - Argument of tpye StopMode, available options are:
@@ -282,12 +281,16 @@ class Vbox():
                 poweroff - will virtually pull the power plug, works reliable
                     and fast, leaves vm in the state aborted
                 save_state - freezes the virtual machine in its current state
+            confirm - trigger an enter to confirm a shutdown dialog
         """
         if not isinstance(stop_mode, StopMode):
             raise TypeError("stop_mode needs to be of type StopMode")
 
         if stop_mode is StopMode.shutdown:
             self.session.console.power_button()
+            if confirm:
+                time.sleep(10)
+                self.keyboard_input("\n")
             if wait:
                 while (self.vm.state > 1):
                     time.sleep(5)
