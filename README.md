@@ -2,11 +2,11 @@ ForGeOSI
 --------
 ![Image](http://max.fauiwg.de/forgeosi/logo256.png?raw=true)
 
-__ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and resonable abstraction.
-The automatisation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
+__ForGeOSI__ is a wrapper for [pyvbox](https://github.com/mjdorma/pyvbox), designed to be used in the education in computer forensics. It simplifies the creation of virtual machines and their automation, while providing a log and reasonable abstraction.
+The automation of guest systems supports modern Windows Versions with Powershell 2 or newer, while any modern Linux system should be supported in theory, only Ubuntu 12.04 and Ubuntu 13.10 are tested though.
 
 ##Requirements
-As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theory should support Python 3 as well, vboxapi has some hickups, so it is not advised.
+As host, a Linux system with VirtualBox 4.3 and the VirtualBox API is expected, Python 2.7 is required, while my software in theory should support Python 3 as well, vboxapi has some hiccups, so it is not advised.
 Further more, the following Python packets are required:
 * pyvbox
 * decorator
@@ -132,14 +132,14 @@ The basic architecture:
 * _lib/param.py_
   Types for typesave parameters
 
-Feel free to extend, i will accept pull requests on a resonable base.
+Feel free to extend, I will accept pull requests on a reasonable base, especially additions to support a wider range of guest systems are welcome. 
 
 ##Testing
 There are testcases to be found __test/__, but they are not portable
 and will need fixing to run on other systems. The tests further depend of following tools:
 * bash
 * Python 3
-* The Sleuth Kit ver 4.1 or highter, including fiwalk
+* The Sleuth Kit ver 4.1 or higher, including fiwalk
 * idifference
 
 ###Issues
@@ -150,7 +150,7 @@ Documentation can be found in __docs/__ after building with `doxygen doxygen.con
 
 
 ###Known bugs and limitations
-* Python 3 compability needs to be tested
+* Python 3 compatibility needs to be tested
 * raw-disk-export in the python API is broken, I'm using vboxmanage instead
 * Running programs in Windows guests with '-' in arguments, breaks things, be careful with that.
 * limited support for Windows hosts
