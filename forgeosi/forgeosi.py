@@ -270,10 +270,11 @@ class Vbox():
 
 
     @check_running
-    def stop(self, stop_mode=StopMode.shutdown, confirm=True, wait=True):
+    def stop(self, stop_mode=StopMode.shutdown, confirm=StopConfirm.none,
+             wait=True):
         """Stop a running machine
         Arguments:
-            stop_mode - Argument of tpye StopMode, available options are:
+            stop_mode - Argument of type StopMode, available options are:
                 shutdown - will send acpi signal to the machine
                     might take some time for the machine to power down.
                     Can hang, if the OS requires interaction, so try to kill all
@@ -281,16 +282,26 @@ class Vbox():
                 poweroff - will virtually pull the power plug, works reliable
                     and fast, leaves vm in the state aborted
                 save_state - freezes the virtual machine in its current state
-            confirm - trigger an enter to confirm a shutdown dialog
+            confirm - Argument of type StopConfirm, available options are:
+                unity - workaround for Ubuntu 13.10 unity shutdown dialog
+                simple - plain pressing enter, speeds up shutdown on
+                    Ubuntu 12.04 unity
+                none - no confirmation
         """
         if not isinstance(stop_mode, StopMode):
             raise TypeError("stop_mode needs to be of type StopMode")
 
+        if not isinstance(confirm, StopConfirm):
+            raise TypeError("stop_mode needs to be of type StopConfirm")
+
         if stop_mode is StopMode.shutdown:
             self.session.console.power_button()
-            if confirm:
-                time.sleep(10)
-                self.keyboard_input("\n")
+            if confirm is StopConfirm.unity:
+                time.sleep(20)
+                self.keyboard_combination(['left'])
+                self.keyboard_combination(['enter'])
+            elif confirm is StopConfirm.simple:
+                self.keyboard_combination(['enter'])
             if wait:
                 while (self.vm.state > 1):
                     time.sleep(5)

@@ -1,3 +1,3 @@
 from forgeosi import *
 
-__all__ = ['forgeosi','lib']
+__all__ = ['forgeosi', 'lib']

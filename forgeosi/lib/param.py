@@ -7,7 +7,8 @@
 
 from enum import Enum
 
-__all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType", "StopMode"]
+__all__ = ["VboxMode", "SessionType", "RunMethod", "ControllerType", "StopMode",
+           "StopConfirm"]
 
 __doc__ = """\
 Collection of enums used for parameters, meant for type safety in parameters,
@@ -78,3 +79,16 @@ class StopMode(Enum):
     poweroff = 1
     shutdown = 2
     save_state = 3
+
+
+class StopConfirm(Enum):
+    """Ways of confirming shutdown
+
+    Members:
+        none
+        unity
+        simple
+    """
+    none = 1
+    unity = 2
+    simple = 3

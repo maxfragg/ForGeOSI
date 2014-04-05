@@ -31,11 +31,14 @@ def run(vm, output, verbose, run):
     vbox.take_screenshot(output+"/screenshot.png")
     vbox.os.make_dir()
     if verbose:
-        print "downloading picture"    
+        print "downloading picture"
     vbox.os.download_file(url=
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
-    time.sleep(30)
-    vbox.stop(stop_mode=forgeosi.StopMode.poweroff)
+    time.sleep(50)
+
+    # confirm shutdown on Ubuntu 13.10
+    vbox.stop(confirm=forgeosi.StopConfirm.unity)
+
     if verbose:
         print "machine stopped"
     vbox.log.write_xml_log(output+"/log.xml")
