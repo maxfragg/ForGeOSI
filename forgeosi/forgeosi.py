@@ -286,6 +286,7 @@ class Vbox():
                 unity - workaround for Ubuntu 13.10 unity shutdown dialog
                 simple - plain pressing enter, speeds up shutdown on
                     Ubuntu 12.04 unity
+                xfce - confirm shutdown for xfce4
                 none - no confirmation
         """
         if not isinstance(stop_mode, StopMode):
@@ -301,6 +302,12 @@ class Vbox():
                 self.keyboard_combination(['left'])
                 self.keyboard_combination(['enter'])
             elif confirm is StopConfirm.simple:
+                time.sleep(20)
+                self.keyboard_combination(['enter'])
+            elif confirm is StopConfirm.xfce:
+                time.sleep(20)
+                self.keyboard_combination(['right'])
+                self.keyboard_combination(['right'])
                 self.keyboard_combination(['enter'])
             if wait:
                 while (self.vm.state > 1):

@@ -19,7 +19,7 @@ def run(vm, output, verbose, run):
     and saves an image file
     """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
-    vbox.start(session_type=forgeosi.SessionType.headless)
+    vbox.start(session_type=forgeosi.SessionType.gui)
     time.sleep(10)
     if verbose:
         print "creating guest session"
@@ -36,8 +36,8 @@ def run(vm, output, verbose, run):
         "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg")
     time.sleep(50)
 
-    # confirm shutdown on Ubuntu 13.10
-    vbox.stop(confirm=forgeosi.StopConfirm.unity)
+    # confirm shutdown on Xbuntu 12.04
+    vbox.stop(confirm=forgeosi.StopConfirm.xfce)
 
     if verbose:
         print "machine stopped"

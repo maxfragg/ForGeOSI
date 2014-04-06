@@ -88,7 +88,9 @@ class StopConfirm(Enum):
         none
         unity
         simple
+        xfce
     """
     none = 1
     unity = 2
     simple = 3
+    xfce = 4
