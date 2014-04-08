@@ -22,7 +22,7 @@ def run(vm, output, verbose, run):
     the vm and cleanup
     """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
-    vbox.start(session_type=forgeosi.SessionType.gui)
+    vbox.start(session_type=forgeosi.SessionType.headless)
     time.sleep(10)
     vbox.create_guest_session()
     vbox.umount_cd()
@@ -37,7 +37,7 @@ def run(vm, output, verbose, run):
     vbox.copy_from_vm(source=dest_path+'/nashorn_baby_01.jpg',
                       dest=output+'/nashorn_baby_01.jpg')
     time.sleep(30)
-    vbox.stop()
+    vbox.stop(confirm=forgeosi.StopConfirm.xfce)
     if verbose:
         print "machine stopped"
     vbox.log.write_xml_log(output+"/log.xml")

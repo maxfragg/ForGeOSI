@@ -960,8 +960,10 @@ class Vbox():
         #for clones we also remove the vm data of the clone and the
         #hdd, to not clutter
         if self.is_clone and rm_clone:
+            self.lock()
+
             hdd = self.session.machine.get_medium(ControllerType.SATA.name,
-                                                  port, disk)
+                                                  0, 0)
             #  machine needs to be unlocked, before it can be removed
             self.unlock()
 
