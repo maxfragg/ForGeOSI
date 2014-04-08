@@ -11,7 +11,7 @@ sys.path.append('../')
 
 import forgeosi
 
-source_path = '/media/MyCD'
+source_path = '/media/default/MyCD'
 dest_path = '/home/default/test'
 
 
@@ -37,7 +37,7 @@ def run(vm, output, verbose, run):
     vbox.copy_from_vm(source=dest_path+'/nashorn_baby_01.jpg',
                       dest=output+'/nashorn_baby_01.jpg')
     time.sleep(30)
-    vbox.stop(confirm=forgeosi.StopConfirm.xfce)
+    vbox.stop(confirm=forgeosi.StopConfirm.unity)
     if verbose:
         print "machine stopped"
     vbox.log.write_xml_log(output+"/log.xml")

@@ -342,10 +342,10 @@ class Logger():
         path was given
         """
         pids = []
-        for l in self.log:
-            if isinstance(l, LogProcess):
-                if path in l.path:
-                    pids.append(l.pid)
+        for each in self.log:
+            if isinstance(each, LogProcess):
+                if path in each.path:
+                    pids.append(each.pid)
         return pids
 
 
@@ -353,9 +353,9 @@ class Logger():
         """Fast way to check for warnings
         """
         warn = ''
-        for l in self.log:
-            if isinstance(l, LogWarning):
-                warn += (l.warning)+'\n'
+        for each in self.log:
+            if isinstance(each, LogWarning):
+                warn += (each.warning)+'\n'
         return warn
 
 
@@ -367,9 +367,9 @@ class Logger():
         """
 
         partial_log = []
-        for l in self.log:
-            if isinstance(l, logtype):
-                partial_log.append(l.to_xml())
+        for each in self.log:
+            if isinstance(each, logtype):
+                partial_log.append(each.to_xml())
         return partial_log
 
 
@@ -380,9 +380,9 @@ class Logger():
             logtype - type of log entry
         """
         ret = []
-        for l in self.log:
-            if isinstance(l, logtype):
-                ret.append(l)
+        for each in self.log:
+            if isinstance(each, logtype):
+                ret.append(each)
         return ret
 
 
@@ -392,8 +392,8 @@ class Logger():
         in the original order of actions
         """
         ret = "<log>\n"
-        for l in self.log:
-            ret += etree.tostring(l.to_xml(), pretty_print=True)
+        for each in self.log:
+            ret += etree.tostring(each.to_xml(), pretty_print=True)
         return ret + "</log>\n"
 
 
@@ -401,9 +401,9 @@ class Logger():
         """Returns human readable log
         """
         ret = ""
-        for l in self.log:
-            ret += l.__class__.__name__+":\n"
-            entry = l.get_entry()
+        for each in self.log:
+            ret += each.__class__.__name__+":\n"
+            entry = each.get_entry()
             for key in entry:
                 ret += "\t"+key+": "+str(entry[key]).encode('string-escape')+"\n"
         return ret

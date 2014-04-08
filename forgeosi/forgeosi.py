@@ -398,10 +398,10 @@ class Vbox():
             # the clone_to_base function is broken with this parameter
             # so as a workaround we use the shell utility vboxmanage instead
             # variant = virtualbox.library.MediumVariant.vmdk_raw_disk
-
             subprocess.check_output(['vboxmanage', 'clonehd', '--format',
                                      'RAW', cur_hdd.location, path])
-
+             # after cloning, we want also to remove the medium from VirtualBox
+            subprocess.check_output(['vboxmanage', 'closemedium', 'disk', path])
         else:
             clone_hdd = self.vb.create_hard_disk("", path)
             variant = virtualbox.library.MediumVariant.standard
@@ -716,8 +716,9 @@ class Vbox():
             timeout - timeout in milliseconds
         """
         plist = self.log.get_log_object_by_type(logger.LogProcess)
-
-        po = [a for a in plist if a.pid == pid][0]
+        # this list should only contain 1 entry, since pid collisions are very
+        # unlikely
+        po = [each for each in plist if each.pid == pid][0]
 
         po.process.terminate()
         po.stdin += po.process.read(1, 65000, timeout)
@@ -834,26 +835,26 @@ class Vbox():
                        'f11': [0xD7], 'f12': [0xD8]}
 
         if make_code:
-            for s in keys:
-                if s in make_codes:
+            for each in keys:
+                if each in make_codes:
                     # the api only likes baseintegers, but hex codes are, what
                     # everybody uses for make/break codes, so this conversion is
                     # needed, using int()
                     self.session.console.keyboard.put_scancodes(
-                        [int(x) for x in make_codes[s]])
-                    self.log.add_keyboard("makecode: "+str(s),
+                        [int(x) for x in make_codes[each]])
+                    self.log.add_keyboard("makecode: "+str(each),
                                           time_offset=self.offset,
                                           time_rate=self.speedup)
                 else:
                     # if its not in the list, assume it is a normal char/num
-                    self.keyboard_input(s)
+                    self.keyboard_input(each)
 
         if break_code:
-            for s in keys:
-                if s in break_codes:
+            for each in keys:
+                if each in break_codes:
                     self.session.console.keyboard.put_scancodes(
-                        [int(x) for x in break_codes[s]])
-                    self.log.add_keyboard("breakcode: "+str(s),
+                        [int(x) for x in break_codes[each]])
+                    self.log.add_keyboard("breakcode: "+str(each),
                                           time_offset=self.offset,
                                           time_rate=self.speedup)
 
@@ -881,7 +882,7 @@ class Vbox():
             self.session.console.mouse.put_mouse_event_absolute(x, y, 0, 0, 0)
 
         self.log.add_mouse(x, y, lmb, mmb, rmb, time_offset=self.offset,
-            time_rate=self.speedup)
+                           time_rate=self.speedup)
 
 
     @check_running

@@ -120,7 +120,7 @@ class OSLinux():
         key_input_split = str.splitlines(str(key_input))
 
         for part in key_input_split:
-            if part is "sleep_hack":
+            if part == "sleep_hack":
                 time.sleep(10)
             else:
                 #reinsert '\n' since we lost that with the splitlines

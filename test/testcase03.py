@@ -13,21 +13,24 @@ import forgeosi
 
 rhino1 = "http://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicornis.jpg/800px-Diceros_bicornis.jpg"
 rhino2 = "https://upload.wikimedia.org/wikipedia/commons/b/b9/D%C3%BCrer_-_Rhinoceros.jpg"
-vm2 = "windows-7-base"
+
 vm1 = "ubuntu-lts-base"
+vm2 = "ubuntu-1310-base"
+vm3 = "windows-7-base"
+vms = "xubuntu-lts-base"
 
 def run(vm, output, verbose, run):
     """testcase 3
 
     Runs 3 virtual machines, using one as server and 2 as clients, interacting
-    via networt. Works only with linux systems
+    via networt. Uses vms defined above and not the parameter
     """
     vboxcfg = forgeosi.VboxConfig()
     vboxcfg.get_nat_network(run)
     vbox_c1 = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"client1")
-    vbox_c2 = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"client2")
-    vbox_c3 = forgeosi.Vbox(basename=vm2, clonename="testrun"+run+"client3")
-    vbox_s = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"server")
+    vbox_c2 = forgeosi.Vbox(basename=vm2, clonename="testrun"+run+"client2")
+    vbox_c3 = forgeosi.Vbox(basename=vm3, clonename="testrun"+run+"client3")
+    vbox_s = forgeosi.Vbox(basename=vms, clonename="testrun"+run+"server")
     p_c1 = vbox_c1.start(wait=False)
     p_c2 = vbox_c2.start(wait=False)
     p_c3 = vbox_c3.start(wait=False)
@@ -63,6 +66,14 @@ def run(vm, output, verbose, run):
     time.sleep(10)
     vbox_s.os.download_file(rhino2, "~/server/rhino2.jpg")
     time.sleep(10)
+    #install ssh-server for using scp later
+    vbox_c1.os.run_shell_cmd("""sudo apt-get install openssh-server
+        sleep_hack
+        12345
+        sleep_hack
+        y
+        """, gui=True)
+    time.sleep(10)
 
     if verbose:
         print "starting webserver"
@@ -80,7 +91,10 @@ def run(vm, output, verbose, run):
     vbox_c1.os.download_file(ip_server+":8080/rhino1.jpg",
                              "~/rhinopix/rhino1.jpg")
     time.sleep(30)
-    vbox_c2.os.run_shell_cmd("""scp """+ip_client1+""":~/rhinopix/rhino1.jpg .
+    # client 2 gets one picture form client 1 via scp
+    vbox_c2.os.run_shell_cmd("""scp default@"""+ip_client1+""":~/rhinopix/rhino1.jpg .
+        sleep_hack
+        yes
         sleep_hack
         12345
         """, gui=True)
