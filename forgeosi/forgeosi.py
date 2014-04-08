@@ -107,7 +107,7 @@ class VboxConfig():
 
 
     def get_network_name(self):
-        """returns the networkname, that has been created for this instance
+        """returns the network name, that has been created for this instance
         """
         return self.network_name
 
@@ -174,7 +174,7 @@ class Vbox():
     def __init__(self, basename="ubuntu-lts-base",
                  clonename="testvm", mode=VboxMode.clone,
                  linked_name="Forensig20Linked", wait=True):
-        """Initialises a virtualbox instance
+        """Initializes a VirtualBox instance
 
         The new instance of this class can either reuse an existing virtual
         machine or create a new one, based on a existing template. The concepts
@@ -298,6 +298,7 @@ class Vbox():
         if stop_mode is StopMode.shutdown:
             self.session.console.power_button()
             if confirm is StopConfirm.unity:
+                # Confirms Unity shutdown dialog in Ubuntu 13.10
                 time.sleep(20)
                 self.keyboard_combination(['left'])
                 self.keyboard_combination(['enter'])
@@ -305,6 +306,7 @@ class Vbox():
                 time.sleep(20)
                 self.keyboard_combination(['enter'])
             elif confirm is StopConfirm.xfce:
+                # Confirms xfce shutdown dialog in Xubuntu 12.04
                 time.sleep(20)
                 self.keyboard_combination(['right'])
                 self.keyboard_combination(['right'])
@@ -434,7 +436,8 @@ class Vbox():
 
         h, w, _, _, _ = self.session.console.display.get_screen_resolution(0)
 
-        png = self.session.console.display.take_screen_shot_png_to_array(0, h, w)
+        png = self.session.console.display.take_screen_shot_png_to_array(0, h,
+                                                                         w)
 
         f = open(path, 'wb')
         f.write(png)
@@ -662,6 +665,7 @@ class Vbox():
 
         stdin = ""  # stdin input is broken in pyvbox!
 
+        # for this combination, the comfort of pyvbox can be used
         if wait and not key_input:
             process, stdout, stderr = self.guestsession.execute(command=command,
                 arguments=arguments, stdin=stdin, environment=environment,
@@ -680,7 +684,6 @@ class Vbox():
             if key_input:
                 time.sleep(wait_time)
                 if native_input:
-                    time.sleep(5)
                     self.os.keyboard_input(key_input=key_input, pid=process.pid)
                 else:
                     self.keyboard_input(key_input=key_input)
@@ -688,9 +691,11 @@ class Vbox():
             if wait:
                 process.wait_for(int(virtualbox.library.ProcessWaitForFlag.terminate),
                                  10000)
-
-            stdout = ""
-            stderr = ""
+                stdout = process.read(1, 65000, timeout)
+                stderr = process.read(2, 65000, timeout)
+            else:
+                stdout = ""
+                stderr = ""
 
         self.log.add_process(process, command, arguments, stdin, key_input,
                              stdout, stderr, process.pid,
@@ -716,7 +721,7 @@ class Vbox():
 
         po.process.terminate()
         po.stdin += po.process.read(1, 65000, timeout)
-        po.stdin += po.process.read(1, 65000, timeout)
+        po.stderr += po.process.read(2, 65000, timeout)
 
 
     @check_running
@@ -949,6 +954,8 @@ class Vbox():
             ignore_errors - ignore errors in removing files
             rm_clone - remove the cloned virtual machine
         """
+
+        #Remove paths, which are stored in the log, works for files and dirs
         path = self.log.cleanup()
         while path:
             if os.path.isdir(path):
