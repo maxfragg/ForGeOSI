@@ -938,7 +938,7 @@ class Vbox():
 
 
     @check_stopped
-    def cleanup_and_delete(self, ignore_errors=True, rm_clone=True):
+    def cleanup_and_delete(self, ignore_errors=True, rm_clone=True, wait=True):
         """clean all data except, what might have been exported
 
         This should be the last thing to do, just to make sure, we do not
@@ -951,24 +951,27 @@ class Vbox():
         """
         path = self.log.cleanup()
         while path:
-            shutil.rmtree(path, ignore_errors)
+            if os.path.isdir(path):
+                shutil.rmtree(path, ignore_errors)
+            else:
+                os.remove(path)
             path = self.log.cleanup()
 
         #for clones we also remove the vm data of the clone and the
         #hdd, to not clutter
         if self.is_clone and rm_clone:
+            hdd = self.session.machine.get_medium(ControllerType.SATA.name,
+                                                  port, disk)
+            #  machine needs to be unlocked, before it can be removed
             self.unlock()
-
-            hdds = []
-
-            for disk in self.vb.hard_disks:
-                if self.vm.id_p in disk.machine_ids:
-                    hdds.append(disk)
 
             self.vm.remove()
 
             #if the hdd is not attached to any other vm, it is save to remove it
             # as well
-            for disk in hdds:
-                if not disk.machine_ids:
-                    disk.delete_storage()
+            if not hdd.machine_ids:
+                progress = hdd.delete_storage()
+                if wait:
+                    progress.wait_for_completion()
+                else:
+                    return progress

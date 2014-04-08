@@ -19,7 +19,7 @@ def run(vm, output, verbose, run):
     and saves an image file
     """
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
-    vbox.start(session_type=forgeosi.SessionType.gui)
+    vbox.start(session_type=forgeosi.SessionType.headless)
     time.sleep(10)
     if verbose:
         print "creating guest session"
@@ -37,7 +37,7 @@ def run(vm, output, verbose, run):
     time.sleep(50)
 
     # confirm shutdown on Xbuntu 12.04
-    vbox.stop(confirm=forgeosi.StopConfirm.xfce)
+    vbox.stop(confirm=forgeosi.StopConfirm.none)
 
     if verbose:
         print "machine stopped"

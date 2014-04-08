@@ -24,7 +24,6 @@ def run(vm, output, verbose, run):
     vbox = forgeosi.Vbox(basename=vm, clonename="testrun"+run)
     vbox.start(session_type=forgeosi.SessionType.gui)
     time.sleep(10)
-    vbox.keyboard_input("12345\n")
     vbox.create_guest_session()
     vbox.umount_cd()
     vbox.mount_folder_as_cd(folder_path="/home/maxfragg/images")
@@ -33,12 +32,16 @@ def run(vm, output, verbose, run):
     vbox.os.copy_file(source=source_path+'/*', destination=dest_path+'/')
     time.sleep(10)
     vbox.umount_cd()
+    if verbose:
+        print "copy file from vm"
     vbox.copy_from_vm(source=dest_path+'/nashorn_baby_01.jpg',
-        dest=output+'/nashorn_baby_01.jpg')
-
+                      dest=output+'/nashorn_baby_01.jpg')
+    time.sleep(30)
     vbox.stop()
     if verbose:
         print "machine stopped"
     vbox.log.write_xml_log(output+"/log.xml")
     vbox.export(path=output+"/disk.img", raw=True)
+    if verbose:
+        print "cleanup"
     vbox.cleanup_and_delete()
