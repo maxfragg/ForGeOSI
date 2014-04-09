@@ -15,7 +15,7 @@ rhino1 = "http://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Diceros_bicor
 rhino2 = "https://upload.wikimedia.org/wikipedia/commons/b/b9/D%C3%BCrer_-_Rhinoceros.jpg"
 
 vm1 = "ubuntu-lts-base"
-vm2 = "ubuntu-1310-base"
+vm2 = "ubuntu-lts-base"
 vm3 = "windows-7-base"
 vms = "xubuntu-lts-base"
 
@@ -28,51 +28,67 @@ def run(vm, output, verbose, run):
     vboxcfg = forgeosi.VboxConfig()
     vboxcfg.get_nat_network(run)
     vbox_c1 = forgeosi.Vbox(basename=vm1, clonename="testrun"+run+"client1")
+    if verbose:
+        print "vm1 created"
+    time.sleep(10)
     vbox_c2 = forgeosi.Vbox(basename=vm2, clonename="testrun"+run+"client2")
+    if verbose:
+        print "vm2 created"
+    time.sleep(10)
     vbox_c3 = forgeosi.Vbox(basename=vm3, clonename="testrun"+run+"client3")
+    if verbose:
+        print "vm1 created"
+    time.sleep(10)
     vbox_s = forgeosi.Vbox(basename=vms, clonename="testrun"+run+"server")
-    p_c1 = vbox_c1.start(wait=False)
-    p_c2 = vbox_c2.start(wait=False)
-    p_c3 = vbox_c3.start(wait=False)
-    p_s = vbox_s.start(wait=False)
-
+    if verbose:
+        print "vms created"
+    time.sleep(10)
+    p_c1 = vbox_c1.start(session_type=forgeosi.SessionType.gui, wait=False)
+    p_c2 = vbox_c2.start(session_type=forgeosi.SessionType.gui, wait=False)
+    vbox_s.start(session_type=forgeosi.SessionType.gui, wait=True)
+    vbox_c3.start(session_type=forgeosi.SessionType.gui, wait=True)
     p_c1.wait_for_completion()
     p_c2.wait_for_completion()
-    p_c3.wait_for_completion()
-    p_s.wait_for_completion()
 
-    time.sleep(10)
+    if verbose:
+        print "all machines booted"
+    time.sleep(60)
 
     vbox_c1.create_guest_session()
     vbox_c2.create_guest_session()
     vbox_c3.create_guest_session()
     vbox_s.create_guest_session()
-
+    if verbose:
+        print "all guest_sessions created"
     vbox_c1.add_to_nat_network(run)
     vbox_c2.add_to_nat_network(run)
     vbox_c3.add_to_nat_network(run)
     vbox_s.add_to_nat_network(run)
     vbox_s.start_network_trace(path=output+"/server.pcap")
     vbox_c1.start_network_trace(path=output+"/client1.pcap")
-
+    time.sleep(60)
     ip_server = vbox_s.get_ip()
     ip_client1 = vbox_c1.get_ip()
-    vbox_s.make_dir("~/server")
+    if verbose:
+        print "ip server: "+str(ip_server)
+        print "ip client1: "+str(ip_client1)
+
+    vbox_s.os.make_dir("/home/default/server")
 
     if verbose:
         print "downloading files to server"
     time.sleep(10)
-    vbox_s.os.download_file(rhino1, "~/server/rhino1.jpg")
+    vbox_s.os.download_file(rhino1, "/home/default/server/rhino1.jpg")
     time.sleep(10)
-    vbox_s.os.download_file(rhino2, "~/server/rhino2.jpg")
+    vbox_s.os.download_file(rhino2, "/home/default/server/rhino2.jpg")
     time.sleep(10)
     #install ssh-server for using scp later
     vbox_c1.os.run_shell_cmd("""sudo apt-get install openssh-server
-        sleep_hack
-        12345
-        sleep_hack
-        y
-        """, gui=True)
+sleep_hack
+12345
+sleep_hack
+y
+""", gui=True)
     time.sleep(10)
 
     if verbose:
@@ -82,9 +98,10 @@ def run(vm, output, verbose, run):
 
     vbox_c1.os.open_browser(ip_server+":8080/rhino1.jpg")
     vbox_c2.os.open_browser(ip_server+":8080/rhino2.jpg")
-    vbox_c3.os.open_browser(ip_server+":8080/rhino2.jpg",
+    vbox_c3.os.open_browser("http://"+ip_server+":8080/rhino2.jpg",
                             method=forgeosi.RunMethod.run)
-
+    if verbose:
+        print "all webbrowsers opened"
     time.sleep(30)
     vbox_c1.os.make_dir("~/rhinopix")
     time.sleep(10)
@@ -92,15 +109,16 @@ def run(vm, output, verbose, run):
                              "~/rhinopix/rhino1.jpg")
     time.sleep(30)
     # client 2 gets one picture form client 1 via scp
-    vbox_c2.os.run_shell_cmd("""scp default@"""+ip_client1+""":~/rhinopix/rhino1.jpg .
-        sleep_hack
-        yes
-        sleep_hack
-        12345
-        """, gui=True)
+    vbox_c2.os.run_shell_cmd(
+"""scp default@"""+ip_client1+""":~/rhinopix/rhino1.jpg .
+sleep_hack
+yes
+sleep_hack
+12345
+""", gui=True)
 
     vbox_s.stop_network_trace()
-    vbox_s.stop()
+    vbox_s.stop(confirm=forgeosi.StopConfirm.xfce)
     vbox_c1.stop_network_trace()
     vbox_c1.stop()
     vbox_c2.stop()

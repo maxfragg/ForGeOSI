@@ -88,20 +88,29 @@ class VboxConfig():
         """creates a nat network, if none of the name exists.
 
         This is needed to enable networking between different VM instances
+
+        Arguments:
+            network_name - name of an existing network or a new network to
+                create
         """
 
         network_name = network_name + USERTOKEN
 
         try:
             self.net = self.vb.find_nat_network_by_name(network_name)
-            self.dhcp = self.vb.find_dhcp_server_by_network_name(network_name)
+            #self.dhcp = self.vb.find_dhcp_server_by_network_name(network_name)
 
         except:
-            self.net = self.vb.create_nat_network(network_name)
-            self.dhcp = self.vb.create_dhcp_server(network_name)
+            # adding networks simply works with vboxmanage, replace with vbox
+            # api code, if you know how to do this.
 
-        self.net.enabled = True
-        self.dhcp.enabled = True
+            subprocess.check_output(['vboxmanage', 'natnetwork', 'add',
+                                     '-t', network_name, '-n',
+                                     '192.168.15.0/24', '-e', '-h', 'on'])
+
+            self.net = self.vb.find_nat_network_by_name(network_name)
+            #self.dhcp = self.vb.find_dhcp_server_by_network_name(network_name)
+
         self.network_name = network_name
         return self.net
 
@@ -517,7 +526,7 @@ class Vbox():
             adapter - internal number of the network adapter, range 0-7
         """
 
-        self.network = self.session.machine.get_network_adapter(adapter=0)
+        self.network = self.session.machine.get_network_adapter(adapter)
 
         self.network.trace_enabled = False
         self.session.machine.save_settings()
@@ -886,7 +895,8 @@ class Vbox():
 
 
     @check_running
-    def add_to_nat_network(self, network_name="test_net", adapter=0):
+    def add_to_nat_network(self, network_name="test_net", adapter=0,
+                           wait_time=20):
         """Adds the VM to a NAT-network
 
         This enables multiple virtual machines to see each other and exchange
@@ -897,6 +907,7 @@ class Vbox():
         Arguments:
             network_name - name of the the network the vm should be added to
             adapter - internal number of the network adapter, range 0-7
+            wait_time - time in seconds, how long the cable should be unplugged
         """
 
         network_name = network_name + USERTOKEN
@@ -910,7 +921,7 @@ class Vbox():
         # to ensure the vm notices the network changes, we remove the cable for
         # 5 seconds
         self.network.cable_connected = False
-        time.sleep(5)
+        time.sleep(wait_time)
         self.network.cable_connected = True
         self.session.machine.save_settings()
 
@@ -980,8 +991,11 @@ class Vbox():
             #if the hdd is not attached to any other vm, it is save to remove it
             # as well
             if not hdd.machine_ids:
-                progress = hdd.delete_storage()
-                if wait:
-                    progress.wait_for_completion()
-                else:
-                    return progress
+                try:
+                    progress = hdd.delete_storage()
+                    if wait:
+                        progress.wait_for_completion()
+                    else:
+                        return progress
+                except:
+                    print("failed to remove disk")

@@ -121,6 +121,7 @@ class OSLinux():
 
         for part in key_input_split:
             if part == "sleep_hack":
+                print("valuesleep_hack")
                 time.sleep(10)
             else:
                 #reinsert '\n' since we lost that with the splitlines
@@ -214,7 +215,7 @@ class OSLinux():
             port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-                           + str(port)+"&")
+                           + str(port)+" &", gui=True)
 
 
     def open_browser(self, url="www.google.com", method=RunMethod.direct):

@@ -27,8 +27,8 @@ def main(argv):
     verbose = False
     run = ''
     try:
-        opts, args = getopt.getopt(argv,"hvm:o:t:r:", ["machine=", "output=",
-            "testcase=", "run="])
+        opts, args = getopt.getopt(argv, "hvm:o:t:r:", ["machine=", "output=",
+                                                        "testcase=", "run="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -67,10 +67,10 @@ def main(argv):
 
     timestamp = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
 
-    print vm +" "+out+" "+timestamp+"_"+vm+"_"+str(run)
+    print vm + " " + out + " " + timestamp + "_" + vm + "_" + str(run)
 
     tc.run(vm=vm, output=out, verbose=verbose,
-        run=timestamp+"_"+vm+"_"+str(run))
+           run=timestamp+"_"+vm+"_"+str(run))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
