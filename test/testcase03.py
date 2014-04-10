@@ -110,7 +110,8 @@ y
     time.sleep(30)
     # client 2 gets one picture form client 1 via scp
     vbox_c2.os.run_shell_cmd(
-"""scp default@"""+ip_client1+""":~/rhinopix/rhino1.jpg .
+"""cd
+scp default@"""+ip_client1+""":~/rhinopix/rhino1.jpg .
 sleep_hack
 yes
 sleep_hack

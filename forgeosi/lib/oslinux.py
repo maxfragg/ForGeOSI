@@ -16,8 +16,8 @@ Linux specifc code, see class documentation for details
 class OSLinux():
     """Linux specific operations
 
-    Classes starting with os should all implement the same interface, that
-    offers features, that depend on the opertation system, running in the VM.
+    Classes starting with OS should all implement the same interface, that
+    offers features, that depend on the operating system, running in the VM.
     some functions require additional software:
         xdotool
 
@@ -107,24 +107,23 @@ class OSLinux():
                 can be used to find program. Will be ignored if empty
             name - X-property, might work better than window_class for some
                 usecases
-            pid - process id, unique idenifier per process, but not per window,
-                is not allways part of the X-properties. Will be ignored if Zero
+            pid - process id, unique identifier per process, but not per window,
+                is not always part of the X-properties. Will be ignored if Zero
         """
 
-        #type will simulate typing and interpret space '\n'
+        # type will simulate typing and interpret space '\n'
         args = self._build_xdotool_args(window_class, name, pid) + ["type",
                                                                     "--delay",
                                                                     "30"]
 
-        #send input line by line, to prevent to long argument
+        # send input line by line, to prevent to long argument
         key_input_split = str.splitlines(str(key_input))
 
         for part in key_input_split:
-            if part == "sleep_hack":
-                print("valuesleep_hack")
+            if part.strip() == "sleep_hack":  # discard leading whitespace
                 time.sleep(10)
             else:
-                #reinsert '\n' since we lost that with the splitlines
+                # reinsert '\n' since we lost that with the splitted lines
                 self.vbox.run_process(command=self.xdt,
                                       arguments=args+[part+'\n'],
                                       environment=self.env)
@@ -141,8 +140,8 @@ class OSLinux():
                 can be used to find program. Will be ignored if empty
             name - X-property, might work better than window_class for some
                 usecases
-            pid - process id, unique idenifier per process, but not per window,
-                is not allways part of the X-properties. Will be ignored if Zero
+            pid - process id, unique identifier per process, but not per window,
+                is not always part of the X-properties. Will be ignored if Zero
         """
 
         #key uses keynames in oposite to type
@@ -207,7 +206,7 @@ class OSLinux():
         """creates a simple webserver, serving a directory on a given port
 
         uses python SimpleHTTPServer, since it is installed by default and acts
-        as a propper webserver, unlike netcat.
+        as a proper webserver, unlike netcat.
 
         Arguments:
             directory - a directory to be served, including subdirectories,
@@ -215,7 +214,7 @@ class OSLinux():
             port - needs to be over 1000, default is 8080
         """
         self.run_shell_cmd("cd "+directory+" ; python -m SimpleHTTPServer "
-                           + str(port)+" &", gui=True)
+                           + str(port), gui=True)
 
 
     def open_browser(self, url="www.google.com", method=RunMethod.direct):
