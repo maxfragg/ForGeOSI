@@ -19,7 +19,8 @@ vm2 = "ubuntu-lts-base"
 vm3 = "windows-7-base"
 vms = "xubuntu-lts-base"
 
-def run(vm, output, verbose, run):
+
+def run(vm="", output="/tmp/tc3", verbose=True, run="1"):
     """testcase 3
 
     Runs 3 virtual machines, using one as server and 2 as clients, interacting
@@ -37,7 +38,7 @@ def run(vm, output, verbose, run):
     time.sleep(10)
     vbox_c3 = forgeosi.Vbox(basename=vm3, clonename="testrun"+run+"client3")
     if verbose:
-        print "vm1 created"
+        print "vm3 created"
     time.sleep(10)
     vbox_s = forgeosi.Vbox(basename=vms, clonename="testrun"+run+"server")
     if verbose:
@@ -67,11 +68,6 @@ def run(vm, output, verbose, run):
     vbox_s.start_network_trace(path=output+"/server.pcap")
     vbox_c1.start_network_trace(path=output+"/client1.pcap")
     time.sleep(60)
-    ip_server = vbox_s.get_ip()
-    ip_client1 = vbox_c1.get_ip()
-    if verbose:
-        print "ip server: "+str(ip_server)
-        print "ip client1: "+str(ip_client1)
 
     vbox_s.os.make_dir("/home/default/server")
 
@@ -95,6 +91,11 @@ y
         print "starting webserver"
     vbox_s.os.serve_directory("~/server", port=8080)
     time.sleep(10)
+    ip_server = vbox_s.get_ip()
+    ip_client1 = vbox_c1.get_ip()
+    if verbose:
+        print "ip server: "+str(ip_server)
+        print "ip client1: "+str(ip_client1)
 
     vbox_c1.os.open_browser(ip_server+":8080/rhino1.jpg")
     vbox_c2.os.open_browser(ip_server+":8080/rhino2.jpg")
@@ -131,10 +132,10 @@ sleep_hack
     vbox_c2.log.write_xml_log(output+"/log_c2.xml")
     vbox_c3.log.write_xml_log(output+"/log_c3.xml")
     vbox_s.log.write_xml_log(output+"/log_s.xml")
-    vbox_c1.export(path=output+"/disk_c1.img", raw=True)
-    vbox_c2.export(path=output+"/disk_c2.img", raw=True)
-    vbox_c3.export(path=output+"/disk_c3.img", raw=True)
-    vbox_s.export(path=output+"/disk_s.img", raw=True)
+    #vbox_c1.export(path=output+"/disk_c1.img", raw=True)
+    #vbox_c2.export(path=output+"/disk_c2.img", raw=True)
+    #vbox_c3.export(path=output+"/disk_c3.img", raw=True)
+    #vbox_s.export(path=output+"/disk_s.img", raw=True)
 
     vbox_c1.cleanup_and_delete()
     vbox_c2.cleanup_and_delete()
