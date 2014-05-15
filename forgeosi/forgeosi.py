@@ -121,6 +121,26 @@ class VboxConfig():
         return self.network_name
 
 
+    def batch_cleanup(self, sub_str):
+        """Removes all virtual machines containing a certain substring
+
+        Arguments:
+            sub_str - substring of the VM name, which should be used to find and
+                remove VMs, use with care! needs to be at least 8 characters
+                long
+        """
+
+        if len(sub_str) < 8:
+            print ("sub_str needs to be at least 8 characters")
+        vbi = VboxInfo()
+        vm_list = str.splitlines(str(vbi.list_vms()))
+        for each in vm_list:
+            if sub_str in each:
+                vbox = Vbox(basename=each, mode=VboxMode.use)
+                vbox.is_clone = True
+                vbox.cleanup_and_delete()
+
+
 @decorator
 def check_running(func, *args, **kwargs):
     """decorator for use inside Vbox class only!

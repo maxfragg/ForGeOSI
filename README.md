@@ -13,8 +13,10 @@ Further more, the following Python packets are required:
 * enum34
 * lxml
 
-
 The Guest systems should be prepared with Guest Additions installed, further hints are given in the docstring documentation, standalone documentation can be generated with `pydoc forgeosi.py`
+
+##Installation
+you can either clone this repository, or install it using `pip install forgeosi`.
 
 ##First Steps
 Lets start a virtual machine, without cloning it

@@ -5,15 +5,9 @@ try:
 except:
     from distutils.core import setup
 
-import re
-import platform
-import os
-import sys
-
-
 setup(
     name="forgeosi",
-    version=0.8,
+    version=1.0,
     packages=["forgeosi",
               "forgeosi.lib"],
     author="Maximilian Krueger",
@@ -21,8 +15,8 @@ setup(
     url="https://github.com/maxfragg/forgeosi",
     description="A forensic generator for operating system images",
     long_description=open('README.md').read(),
-    license="GNU GPL v3",
+    license="simplified BSD",
     zip_safe=False,
-    install_requires = ['pyvbox', 'enum34', 'decorator'],
+    install_requires=['pyvbox', 'enum34', 'decorator'],
     platforms=['cygwin', 'linux'],
 )
