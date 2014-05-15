@@ -146,7 +146,8 @@ and will need fixing to run on other systems. The tests further depend of follow
 Please report issues on [github](https://github.com/maxfragg/ForgeOSI/issues)
 
 ###Documentation
-Documentation can be found in __docs/__ after building with `doxygen doxygen.conf` or accessed [here](http://max.fauiwg.de/forgeosi/index.html)
+Documentation can be found in __docs/__ after building with `doxygen doxygen.conf` or accessed [here](http://max.fauiwg.de/forgeosi/index.html).
+Additionaly, you can find my presentation [here](http://max.fauiwg.de/forgeosi/vortrag.pdf).
 
 
 ###Known bugs and limitations
